@@ -86,8 +86,14 @@ void write_error() {
 void batch_mode() {
 
 }
-
+/*Get user wanted path as param: f.ex: (current path) + /oskukoodaa/niilokoodaa*/
 void cd() {
+    
+    if (chdir("/PATH THING VARIABLE") != 0){
+        printf("Liukastuit banaaniin. Yritäs uudelleen!\n");
+        perror("cd failed blaablaa");
+    }
+
 
 }
 
@@ -100,4 +106,5 @@ void path() {
 void redirect() {
 
 }
+
 
