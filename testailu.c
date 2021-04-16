@@ -3,10 +3,18 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MAXLEN 1024
+
+typedef struct arg {
+    char data[MAXLEN];
+    struct arg *next;
+} Arg;
+
 
 void interactive_mode();
 void write_error();
 void parse_command(char *buffer);
+void free_list(Arg *head);
 
 
 int main(int argc, char *argv[]) {
@@ -29,14 +37,12 @@ void interactive_mode() {
     char *buffer = NULL;
     size_t bufsize = 0;
     
-
     while (1) {
         printf("wish> ");
         if (getline(&buffer, &bufsize, stdin) == EOF) {
             exit(0);
         }
         parse_command(buffer);
-       
     }
 }
 
@@ -44,37 +50,95 @@ void interactive_mode() {
 void parse_command(char *buffer) {
     char *token;
     const char delim[1] = " ";
+    int length = 0;
+     Arg *ptr = NULL, *head = NULL, *tmp = NULL;
 
     /* Removing newline from the end */ 
     buffer[strcspn(buffer, "\n")] = '\0';
 
     token = strtok(buffer, delim);
 
-    if (strcmp("exit", token) == 0) {
-        if ((token = strtok(NULL, delim)) != NULL) {
+    while (token != NULL) {
+        if ((ptr = (Arg*)malloc(sizeof(Arg))) == NULL) {
+            write_error();
+            exit(0);
+        }
+        strcpy(ptr->data, token);
+        ptr->next = NULL;
+        
+        length++;
+        
+
+        if (head == NULL) {
+            head = ptr;
+            tmp = ptr;
+            
+        
+        } else {
+            tmp->next = ptr;
+            tmp = ptr;
+            printf("hulhju\n");
+        }
+        
+        token = strtok(NULL, delim);
+        printf("fhulhju\n");
+
+    }
+
+
+
+    if (strcmp("exit", head->data) == 0) {
+        if (length != 0) {
             write_error();
         
         } else {
             free(buffer);
+            free_list(head);
             exit(0);
         }
     
-    } else if (strcmp("cd", token) == 0) {
-
-        printf("huikeit juttui\n");
+    } else if (strcmp("cd", head->data) == 0) {
+        if (length > 1) {
+            write_error();
+        }
+        printf("%s\n", head->next->data);
     
-    } else if (strcmp("path", token) == 0) {
+    } else if (strcmp("path", head->data) == 0) {
         printf("polkujuttuja\n");
 
     } else {
         printf("juhuu\n");
     }
+    free_list(head);
 }
+
+
+void free_list(Arg *head) {
+    Arg *ptr;
+    ptr = head;
+    while (ptr != NULL) {
+        head = ptr->next;
+        free(ptr);
+        ptr = head;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
 
 void write_error() {
     char error_message[30] = "An error has occurred\n";
     write(STDERR_FILENO, error_message, strlen(error_message));
 }
+
 
 
 void batch_mode() {
@@ -101,20 +165,4 @@ void redirect() {
 
 }
 
-void shell_execute(char *args[]){
-    /*CASE INTERACTIVE*/
-    /* Fork() current process to create a copy
-       to know which process is which, we look at the process id's
-       -> parent has child_pid of child and child has child_pid of 0
-       
-       use exec variant execvp() (or something) to run wanted program in child process created by fork
-       exec + v(takes vector of parameters) p (finds program by its name)
 
-       parent waits until child has completed
-       add a shitton of if's and error checks and validate that child process has ended properly
-       after that we can go on and start doing other stuff
-    */
-   /*CASE BATCH*/
-   /*For i in commands i*/
-
-}
