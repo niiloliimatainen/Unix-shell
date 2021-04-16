@@ -82,7 +82,6 @@ void write_error() {
 }
 
 
-
 void batch_mode() {
 
 }
@@ -107,4 +106,20 @@ void redirect() {
 
 }
 
+void shell_execute(char *args[]){
+    /*CASE INTERACTIVE*/
+    /* Fork() current process to create a copy
+       to know which process is which, we look at the process id's
+       -> parent has child_pid of child and child has child_pid of 0
+       
+       use exec variant execvp() (or something) to run wanted program in child process created by fork
+       exec + v(takes vector of parameters) p (finds program by its name)
 
+       parent waits until child has completed
+       add a shitton of if's and error checks and validate that child process has ended properly
+       after that we can go on and start doing other stuff
+    */
+   /*CASE BATCH*/
+   /*For i in commands i*/
+
+}
