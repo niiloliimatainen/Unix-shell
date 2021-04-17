@@ -7,6 +7,7 @@
 
 typedef struct arg {
     char data[MAXLEN];
+    
     struct arg *next;
 } Arg;
 
