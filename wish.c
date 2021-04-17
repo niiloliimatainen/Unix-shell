@@ -1,3 +1,10 @@
+/*
+Sources:
+    1. https://brennan.io/2015/01/16/write-a-shell-in-c/
+
+
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +17,7 @@ void interactive_mode();
 void write_error();
 void parse_command(char *buffer);
 void shell_execute(char **args, int size);
-void cd(char *buffer);
+void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
 
 
@@ -46,7 +53,7 @@ void interactive_mode() {
     free(buffer);
 }
 
-
+/* Inspiration for args list is taken from 1. source */
 void parse_command(char *buffer) {
     char *token, **args, delim[1] = " ";
     int index = 0, size, maxlen = MAXLEN;
@@ -137,34 +144,27 @@ void write_error() {
 void batch_mode() {
 
 }
+
 /*Get user wanted path as param: f.ex: (current path) + /oskukoodaa/niilokoodaa*/
-void cd(char *token) {
-    int count = 0;
-    
-    while (1) {
-        if ((token = strtok(NULL, " ")) == NULL) {
-            break;
-        }
-        count++;
-    }
-
-    printf("%d\n", count);
-
-    if (count != 1) {
+void wish_cd(char **args, int size) {
+    if (size != 1) {
         write_error();
     
     } else {
-        printf("siirtoi ja sillee\n");
+        /* Check if chdir succeeds */
+        if (chdir(args[1]) == -1) {
+            write_error();
+        }
     }
 }
 
 
-void path() {
+void wish_path() {
 
 }
 
 
-void redirect() {
+void wish_redirect() {
 
 }
 
@@ -235,9 +235,4 @@ void shell_execute(char **args, int size) {
     printf("\n");
     return;
 
-}
-
-
-void wish_exit(char *token, char *buffer) {
- 
 }
