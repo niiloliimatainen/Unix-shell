@@ -7,6 +7,7 @@
 void interactive_mode();
 void write_error();
 void parse_command(char *buffer);
+void cd(char *buffer);
 
 
 int main(int argc, char *argv[]) {
@@ -29,47 +30,56 @@ void interactive_mode() {
     char *buffer = NULL;
     size_t bufsize = 0;
     
-
     while (1) {
         printf("wish> ");
+
         if (getline(&buffer, &bufsize, stdin) == EOF) {
             exit(0);
         }
+
         parse_command(buffer);
-       
     }
 }
 
 
 void parse_command(char *buffer) {
     char *token;
-    const char delim[1] = " ";
+    int index;
 
-    /* Removing newline from the end */ 
-    buffer[strcspn(buffer, "\n")] = '\0';
+    /* Return if input is empty, else remove newline from the end */ 
+    if ((index = strcspn(buffer, "\n")) == 0) {
+        write_error();
+        return;
 
-    token = strtok(buffer, delim);
+    } else {
+        buffer[index] = '\0';
+    }
+
+    token = strtok(buffer, " ");
 
     if (strcmp("exit", token) == 0) {
-        if ((token = strtok(NULL, delim)) != NULL) {
+        if ((token = strtok(NULL, " ")) != NULL) {
             write_error();
         
         } else {
             free(buffer);
             exit(0);
         }
-    
-    } else if (strcmp("cd", token) == 0) {
 
-        printf("huikeit juttui\n");
+    } 
+    
+    /*else if (strcmp("cd", token) == 0) {
+        cd(token);
     
     } else if (strcmp("path", token) == 0) {
         printf("polkujuttuja\n");
 
     } else {
         printf("juhuu\n");
-    }
+    }*/
 }
+
+
 
 void write_error() {
     char error_message[30] = "An error has occurred\n";
@@ -81,14 +91,24 @@ void batch_mode() {
 
 }
 /*Get user wanted path as param: f.ex: (current path) + /oskukoodaa/niilokoodaa*/
-void cd() {
+void cd(char *token) {
+    int count = 0;
     
-    if (chdir("/PATH THING VARIABLE") != 0){
-        printf("Liukastuit banaaniin. Yritäs uudelleen!\n");
-        perror("cd failed blaablaa");
+    while (1) {
+        if ((token = strtok(NULL, " ")) == NULL) {
+            break;
+        }
+        count++;
     }
 
+    printf("%d\n", count);
 
+    if (count != 1) {
+        write_error();
+    
+    } else {
+        printf("siirtoi ja sillee\n");
+    }
 }
 
 
