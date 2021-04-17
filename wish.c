@@ -32,7 +32,7 @@ void interactive_mode() {
     
     while (1) {
         printf("wish> ");
-        
+
         if (getline(&buffer, &bufsize, stdin) == EOF) {
             exit(0);
         }
@@ -65,17 +65,21 @@ void parse_command(char *buffer) {
             free(buffer);
             exit(0);
         }
+
+    } 
     
-    } else if (strcmp("cd", token) == 0) {
-        cd(buffer);
+    /*else if (strcmp("cd", token) == 0) {
+        cd(token);
     
     } else if (strcmp("path", token) == 0) {
         printf("polkujuttuja\n");
 
     } else {
         printf("juhuu\n");
-    }
+    }*/
 }
+
+
 
 void write_error() {
     char error_message[30] = "An error has occurred\n";
