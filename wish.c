@@ -3,11 +3,15 @@
 #include <string.h>
 #include <unistd.h>
 
+#define MAXLEN 64
+
 
 void interactive_mode();
 void write_error();
 void parse_command(char *buffer);
+void shell_execute(char **args, int size);
 void cd(char *buffer);
+void wish_exit(char *token, char *buffer);
 
 
 int main(int argc, char *argv[]) {
@@ -39,44 +43,87 @@ void interactive_mode() {
 
         parse_command(buffer);
     }
+    free(buffer);
 }
 
 
 void parse_command(char *buffer) {
-    char *token;
-    int index;
+    char *token, **args, delim[1] = " ";
+    int index = 0, size, maxlen = MAXLEN;
 
     /* Return if input is empty, else remove newline from the end */ 
-    if ((index = strcspn(buffer, "\n")) == 0) {
+    if ((size = strcspn(buffer, "\n")) == 0) {
         write_error();
         return;
 
     } else {
-        buffer[index] = '\0';
+        buffer[size] = '\0';
     }
 
-    token = strtok(buffer, " ");
+    token = strtok(buffer, delim);
 
+    /* Own implementation of exit command */
     if (strcmp("exit", token) == 0) {
         if ((token = strtok(NULL, " ")) != NULL) {
             write_error();
-        
+            return;
         } else {
             free(buffer);
             exit(0);
         }
+    }
 
-    } 
-    
-    /*else if (strcmp("cd", token) == 0) {
-        cd(token);
-    
-    } else if (strcmp("path", token) == 0) {
-        printf("polkujuttuja\n");
+    if ((args = malloc(maxlen * sizeof(char*))) == NULL) {
+        write_error();
+        exit(0);
+    }
 
-    } else {
-        printf("juhuu\n");
-    }*/
+
+    while (1) {
+
+        while (1) {
+            args[index] = token;
+            index++;
+
+            if (index >= MAXLEN) {
+                maxlen += MAXLEN;
+                if ((args = realloc(args, maxlen * sizeof(char*))) == NULL) {
+                    write_error();
+                    exit(0);
+                }
+            }
+
+            if (((token = strtok(NULL, delim)) == NULL) || (strcmp(token, "&") == 0)) {
+                break;
+            }
+        }
+        
+        if (token == NULL) {
+            break;
+        
+        } else if (strcmp(token, "&")) {
+            token = strtok(NULL, delim);
+        }
+
+
+
+
+     /*   } else if (strcmp("cd", token) == 0) {
+            cd(token);
+        
+        } else if (strcmp("path", token) == 0) {
+            printf("polkujuttuja\n");
+
+        } else {
+            printf("juhuu\n");
+        }
+             shell_execute(token);
+
+        */
+    }
+
+    shell_execute(args, index);
+    free(args);
 }
 
 
@@ -121,7 +168,7 @@ void redirect() {
 
 }
 
-void shell_execute(char *args[]){
+void shell_execute(char **args, int size) {
     /*CASE INTERACTIVE*/
     /* Fork() current process to create a copy
        to know which process is which, we look at the process id's
@@ -137,4 +184,14 @@ void shell_execute(char *args[]){
    /*CASE BATCH*/
    /*For i in commands i*/
 
+    for (int i = 0; i < size; i++) {
+        printf("%s ", args[i]);
+    }
+    printf("\n");
+
+}
+
+
+void wish_exit(char *token, char *buffer) {
+ 
 }
