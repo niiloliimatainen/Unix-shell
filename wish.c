@@ -191,15 +191,55 @@ FILE * wish_redirect(char *fname) {
 
 
 void wish_exec(char **args, int size){
+    char **command;
+    int maxlen = MAXLEN;
+
+
+    /*built in testit*/
+
+     if ((command = malloc(maxlen * sizeof(char*))) == NULL) {
+        write_error();
+        exit(0);
+    }
+
     
     for (int i = 0; i < size; i++){
-        if (i==0){
-            /*save first cmd to [0] and continue adding params until hits end or &*/
-        }
+        
         if (strcmp("&", args[i]) == 0){
+            /*forkki kutsu */
+
+
+            command[index + 1] = NULL;
+            
+            for (int i = 0; command[i] != NULL; i++) {
+                command[i] = NULL;
+            }
+
+            i++;
+
+
+
+        } else {
+            
+            command[index] = args[i];
+            index++;
+
+            if (index >= MAXLEN) {
+                maxlen += MAXLEN;
+                if ((command = realloc(command, maxlen * sizeof(char*))) == NULL) {
+                    write_error();
+                    exit(0);
+                }
+            }
 
         }
+
+
+            
+
+
     }
+    free(command);
 }
 
 void shell_fork_exec(char **args) {
