@@ -188,7 +188,6 @@ FILE * wish_redirect(char *fname) {
     return file;
 }
 
-<<<<<<< HEAD
 typedef struct arg {
     char argv[MAXLEN];
     
@@ -289,12 +288,5 @@ void shell_fork_exec(char **args) {
     printf("\n");
     return;
 
-=======
-
-void shell_execute(char **args, int size) {
-    for (int i = 0; i < size; i++) {
-        printf("%s", args[i]);
-    }
->>>>>>> a419cc23877b7a1345bc37c5e25dd6e9e2fb1301
 }
 
