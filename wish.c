@@ -139,10 +139,10 @@ void parse_command(char *buffer) {
                 exit(0);
             }
         }
-        
         token = strtok(NULL, delim);
     }
-    
+
+    args[index] = NULL;
     wish_exec(args, index);
     free(args);
     
@@ -197,8 +197,7 @@ typedef struct arg {
 
 void wish_exec(char **args, int size){
     char **command;
-    int maxlen = MAXLEN;
-
+    int maxlen = MAXLEN, i_args, i_command = 0;
 
     /*built in testit*/
 
@@ -207,43 +206,39 @@ void wish_exec(char **args, int size){
         exit(0);
     }
 
-    
-    for (int index = 0; index < size; index++){
-        
-        if (strcmp("&", args[index]) == 0){
+    for (i_args = 0; i_args < size; i_args++){
+        if (strcmp("&", args[i_args]) == 0){
+            
+            if (args[i_args + 1] == NULL) {
+                write_error();
+                return;
+            }
             /*forkki kutsu */
             shell_fork_exec(command);
 
+            command[i_command + 1] = NULL;
 
-            command[index + 1] = NULL;
-            for (index = 0; command[index] != NULL; index++) {
-                command[index] = NULL;
+            for (i_command = 0; command[i_command] != NULL; i_command++) {
+                command[i_command] = NULL;
             }
-
-            index++;
-
-
+            i_command = -1;
 
         } else {
-            
-            command[index] = args[index];
-            index++;
+            command[i_command] = args[i_args];
 
-            if (index >= MAXLEN) {
+            if (i_command >= MAXLEN) {
                 maxlen += MAXLEN;
                 if ((command = realloc(command, maxlen * sizeof(char*))) == NULL) {
                     write_error();
                     exit(0);
                 }
             }
-
         }
-
-
-            
-
-
+        i_command++;
     }
+    shell_fork_exec(command);
+
+
     pid_t wpid;
     int ret_stat;
     while((wpid = waitpid(-1, &ret_stat, 0)) != -1) {
@@ -251,7 +246,7 @@ void wish_exec(char **args, int size){
         if(ret_stat == 0){
             printf("child %d terminated succesfully\n", wpid);
         }else{
-            printf("Child %d terminated with error", wpid);
+            printf("Child %d terminated with error\n", wpid);
             /*Further checks to be added here*/
         }
     }
@@ -259,18 +254,14 @@ void wish_exec(char **args, int size){
     free(command);
 }
 
-void shell_fork_exec(char **args) {
-   
-    /*NOTE: Now expects only one command: args[] = command, arg1, arg2...*/
-    int counter = 1;
-    
+void shell_fork_exec(char **args) {   
+    /*NOTE: Now expects only one command: args[] = command, arg1, arg2...*/    
     /*for (int i = 0; i < size; i++) {
 
         if (strcmp("&", args[i]) == 0){
             counter++;
         }
     }*/
-    printf("counter:%d\n", counter);
     /*Somewhere here should be a loop to start multiple processes at once*/
     /*Need to figure out if these commands are builtins and should be ran at the main process and not in child*/
     
