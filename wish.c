@@ -18,16 +18,27 @@ void parse_command(char *buffer);
 void shell_execute(char **args, int size);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
+void batch_mode(FILE *file);
 
 
+/* Parsing the arguments and executing them */
 int main(int argc, char *argv[]) {
+    FILE *file;
 
+    /* If no arguments given, starts an interactive mode */
     if (argc == 1) {
         interactive_mode();
     
+    /* If one argument is given, executes that file with batch mode */
     } else if (argc == 2) {
-        printf("juttuja\n");
+        if ((file = fopen(argv[1], "r")) == NULL) {
+                write_error();
+			    exit(1);
+        } 
+        batch_mode(file);
+        fclose(file);
    
+    /* If more than one argument is give, exit the program */
     } else {
         return 0;
     }
@@ -36,6 +47,7 @@ int main(int argc, char *argv[]) {
 }
 
 
+/* An infinite loop that takes commands from stdin and executes them. The loop stops when "exit" is given. */
 void interactive_mode() {
     char *buffer = NULL;
     size_t bufsize = 0;
@@ -51,6 +63,19 @@ void interactive_mode() {
     }
     free(buffer);
 }
+
+/* Reading commands from .wh type of file and executing them */
+void batch_mode(FILE *file) {
+    char *buffer = NULL;
+    size_t bufsize = 0;
+
+    while (getline(&buffer, &bufsize, file) != EOF) {
+        parse_command(buffer);
+    }
+    printf("hommat toimi\n");
+    free(buffer);
+}
+
 
 /* Inspiration for args list is taken from 1. source */
 void parse_command(char *buffer) {
@@ -140,10 +165,6 @@ void write_error() {
 }
 
 
-void batch_mode() {
-
-}
-
 /*Get user wanted path as param: f.ex: (current path) + /oskukoodaa/niilokoodaa*/
 void wish_cd(char **args, int size) {
     if (size != 1) {
@@ -166,6 +187,7 @@ void wish_path() {
 void wish_redirect() {
 
 }
+
 
 void shell_execute(char **args, int size) {
     /*NOTE: Now expects only one command: args[] = command, arg1, arg2...*/
@@ -235,3 +257,4 @@ void shell_execute(char **args, int size) {
     return;
 
 }
+
