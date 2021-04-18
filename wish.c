@@ -17,7 +17,7 @@ void interactive_mode();
 void write_error();
 void parse_command(char *buffer);
 void shell_fork_exec(char **args);
-void wish_exec(char **args);
+void wish_exec(char **args, int size);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
 void batch_mode(FILE *file);
@@ -143,7 +143,7 @@ void parse_command(char *buffer) {
         token = strtok(NULL, delim);
     }
     
-    shell_execute(args, index);
+    wish_exec(args, index);
     free(args);
     
     /* If there is redirect, close the file and resume standard behavior of stdout */
@@ -212,6 +212,7 @@ void wish_exec(char **args, int size){
         
         if (strcmp("&", args[index]) == 0){
             /*forkki kutsu */
+            shell_fork_exec(command);
 
 
             command[index + 1] = NULL;
@@ -243,6 +244,18 @@ void wish_exec(char **args, int size){
 
 
     }
+    pid_t wpid;
+    int ret_stat;
+    while((wpid = waitpid(-1, &ret_stat, 0)) != -1) {
+
+        if(ret_stat == 0){
+            printf("child %d terminated succesfully\n", wpid);
+        }else{
+            printf("Child %d terminated with error", wpid);
+            /*Further checks to be added here*/
+        }
+    }
+
     free(command);
 }
 
@@ -262,9 +275,9 @@ void shell_fork_exec(char **args) {
     /*Need to figure out if these commands are builtins and should be ran at the main process and not in child*/
     
     /*process part starts*/
-    pid_t pid, wpid;
+    pid_t pid;
     printf("Parent:PID:%d, PPID:%d\n", getpid(), getppid());
-    for (int x=0; x<counter;x++){
+    for (int x=0; x<1;x++){
         
     
         
@@ -288,17 +301,6 @@ void shell_fork_exec(char **args) {
         }
     }
     /*Now we are in parent process*/
-    int ret_stat;
-    while((wpid = waitpid(-1, &ret_stat, 0)) != -1) {
-
-        if(ret_stat == 0){
-            printf("child %d terminated succesfully\n", wpid);
-        }else{
-            printf("Child %d terminated with error", wpid);
-            /*Further checks to be added here*/
-        }
-    }
-
 
        
     /*process part ends and function can return to receive new calls*/
