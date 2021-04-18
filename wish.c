@@ -1,14 +1,14 @@
 /*
 Sources:
     1. https://brennan.io/2015/01/16/write-a-shell-in-c/
-
-
+    2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file
 */
 #include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 
 #define MAXLEN 64
 
@@ -20,16 +20,29 @@ void shell_fork_exec(char **args);
 void wish_exec(char **args);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
+void batch_mode(FILE *file);
+FILE * wish_redirect(char *fname);
 
 
+/* Parsing the arguments and executing them */
 int main(int argc, char *argv[]) {
+    FILE *file;
 
+    /* If no arguments given, starts an interactive mode */
     if (argc == 1) {
         interactive_mode();
     
+    /* If one argument is given, executes that file with batch mode */
     } else if (argc == 2) {
-        printf("juttuja\n");
+
+        if ((file = fopen(argv[1], "r")) == NULL) {
+                write_error();
+			    exit(1);
+        } 
+        batch_mode(file);
+        fclose(file);
    
+    /* If more than one argument is give, exit the program */
     } else {
         return 0;
     }
@@ -38,6 +51,7 @@ int main(int argc, char *argv[]) {
 }
 
 
+/* An infinite loop that takes commands from stdin and executes them. The loop stops when "exit" is given. */
 void interactive_mode() {
     char *buffer = NULL;
     size_t bufsize = 0;
@@ -54,10 +68,25 @@ void interactive_mode() {
     free(buffer);
 }
 
+
+/* Reading commands from .wh type of file and executing them */
+void batch_mode(FILE *file) {
+    char *buffer = NULL;
+    size_t bufsize = 0;
+
+    while (getline(&buffer, &bufsize, file) != EOF) {
+        parse_command(buffer);
+    }
+    printf("hommat toimi\n");
+    free(buffer);
+}
+
+
 /* Inspiration for args list is taken from 1. source */
 void parse_command(char *buffer) {
     char *token, **args, delim[1] = " ";
     int index = 0, size, maxlen = MAXLEN;
+    FILE *file = NULL;
 
     /* Return if input is empty, else remove newline from the end */ 
     if ((size = strcspn(buffer, "\n")) == 0) {
@@ -86,54 +115,44 @@ void parse_command(char *buffer) {
         exit(0);
     }
 
-
     while (1) {
-
-        while (1) {
-            args[index] = token;
-            index++;
-
-            if (index >= MAXLEN) {
-                maxlen += MAXLEN;
-                if ((args = realloc(args, maxlen * sizeof(char*))) == NULL) {
-                    write_error();
-                    exit(0);
-                }
-            }
-
-            if (((token = strtok(NULL, delim)) == NULL) || (strcmp(token, "&") == 0)) {
-                break;
-            }
-        }
-        
         if (token == NULL) {
             break;
-        
-        } else if (strcmp(token, "&")) {
-            token = strtok(NULL, delim);
+
+        } else if (strcmp(">", token) == 0) {
+
+            /* If no output file, the output is written to stdout */
+            if ((token = strtok(NULL, delim)) == NULL) {
+                break;
+            }
+            file = wish_redirect(token);
+            break;
         }
 
+        args[index] = token;
+        index++;
 
-
-
-     /*   } else if (strcmp("cd", token) == 0) {
-            cd(token);
-        
-        } else if (strcmp("path", token) == 0) {
-            printf("polkujuttuja\n");
-
-        } else {
-            printf("juhuu\n");
+        if (index >= MAXLEN) {
+            maxlen += MAXLEN;
+            if ((args = realloc(args, maxlen * sizeof(char*))) == NULL) {
+                write_error();
+                exit(0);
+            }
         }
-             shell_execute(token);
-
-        */
+        
+        token = strtok(NULL, delim);
     }
-
+    
     shell_execute(args, index);
     free(args);
+    
+    /* If there is redirect, close the file and resume standard behavior of stdout */
+    if (file != NULL) {
+        fclose(file);
+        /* This is taken from 2. source */
+        freopen("/dev/tty", "w", stdout);
+    }
 }
-
 
 
 void write_error() {
@@ -141,10 +160,6 @@ void write_error() {
     write(STDERR_FILENO, error_message, strlen(error_message));
 }
 
-
-void batch_mode() {
-
-}
 
 /*Get user wanted path as param: f.ex: (current path) + /oskukoodaa/niilokoodaa*/
 void wish_cd(char **args, int size) {
@@ -165,10 +180,15 @@ void wish_path() {
 }
 
 
-void wish_redirect() {
-
+FILE * wish_redirect(char *fname) {
+    FILE *file;
+    if ((file = freopen(fname, "w", stdout)) == NULL) {
+        write_error();
+    }
+    return file;
 }
 
+<<<<<<< HEAD
 typedef struct arg {
     char argv[MAXLEN];
     
@@ -269,4 +289,12 @@ void shell_fork_exec(char **args) {
     printf("\n");
     return;
 
+=======
+
+void shell_execute(char **args, int size) {
+    for (int i = 0; i < size; i++) {
+        printf("%s", args[i]);
+    }
+>>>>>>> a419cc23877b7a1345bc37c5e25dd6e9e2fb1301
 }
+
