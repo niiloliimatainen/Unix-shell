@@ -210,12 +210,12 @@ void wish_exec(char **args, int size){
     
     for (int index = 0; index < size; index++){
         
-        if (strcmp("&", args[i]) == 0){
+        if (strcmp("&", args[index]) == 0){
             /*forkki kutsu */
 
 
             command[index + 1] = NULL;
-            for (int index = 0; command[index] != NULL; index++) {
+            for (index = 0; command[index] != NULL; index++) {
                 command[index] = NULL;
             }
 
