@@ -188,11 +188,6 @@ FILE * wish_redirect(char *fname) {
     return file;
 }
 
-typedef struct arg {
-    char argv[MAXLEN];
-    
-    struct arg *next;
-} Arg;
 
 
 void wish_exec(char **args, int size){
