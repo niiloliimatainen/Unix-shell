@@ -1,14 +1,13 @@
 /*
 Sources:
     1. https://brennan.io/2015/01/16/write-a-shell-in-c/
-
-
 */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 
 #define MAXLEN 64
 
@@ -188,5 +187,4 @@ void shell_execute(char **args, int size) {
         printf("%s ", args[i]);
     }
     printf("\n");
-
 }
