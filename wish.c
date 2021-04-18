@@ -4,7 +4,7 @@ Sources:
 
 
 */
-
+#include <sys/wait.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,7 +16,8 @@ Sources:
 void interactive_mode();
 void write_error();
 void parse_command(char *buffer);
-void shell_execute(char **args, int size);
+void shell_fork_exec(char **args);
+void wish_exec(char **args);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
 
@@ -168,47 +169,80 @@ void wish_redirect() {
 
 }
 
-void shell_execute(char **args, int size) {
+typedef struct arg {
+    char argv[MAXLEN];
+    
+    struct arg *next;
+} Arg;
+
+
+void wish_exec(char **args, int size){
+    
+    for (int i = 0; i < size; i++){
+        if (i==0){
+            /*save first cmd to [0] and continue adding params until hits end or &*/
+        }
+        if (strcmp("&", args[i]) == 0){
+
+        }
+    }
+}
+
+void shell_fork_exec(char **args) {
+   
     /*NOTE: Now expects only one command: args[] = command, arg1, arg2...*/
-    int counter = 0;
-    for (int i = 0; i < size; i++) {
+    int counter = 1;
+    
+    /*for (int i = 0; i < size; i++) {
+
         if (strcmp("&", args[i]) == 0){
             counter++;
         }
-    }
+    }*/
     printf("counter:%d\n", counter);
     /*Somewhere here should be a loop to start multiple processes at once*/
     /*Need to figure out if these commands are builtins and should be ran at the main process and not in child*/
     
     /*process part starts*/
     pid_t pid, wpid;
+    printf("Parent:PID:%d, PPID:%d\n", getpid(), getppid());
+    for (int x=0; x<counter;x++){
+        
+    
+        
+        pid = fork();
+        
+        /*Fork returns pid of child to parent and pid of 0 to child*/
+        /*So child i pid=0 and parent is something else*/
+        if (pid == 0){
+            printf("PID:%d, PPID:%d\n", getpid(), getppid());
+            /*Launch program in child process*/
+            /*execvp(prgrm name, arguments vector)*/
+            if (execvp(args[0],args) == -1){
 
-    pid = fork();
-    /*Fork returns pid of child to parent and pid of 0 to child*/
-    /*So child i pid=0 and parent is something else*/
-    if (pid == 0){
-        /*Launch program in child process*/
-        /*execvp(prgrm name, arguments vector)*/
-        if (execvp(args[0],args) == -1){
-            fprintf("Something happened when launching program %s", args[0]);
-            perror("Shell-execute->execvp");
+                printf("Something happened when launching program %s", args[0]);
+                perror("Shell-execute->execvp");
+            }
+        }else if (pid < 0){
+            /*Fork has failed if process id is less than */
+            perror("Shell-execute->ParentFork");
+    
         }
+    }
+    /*Now we are in parent process*/
+    int ret_stat;
+    while((wpid = waitpid(-1, &ret_stat, 0)) != -1) {
 
-    }else if (pid < 0){
-        /*Fork has failed if process id is less than */
-        perror("Shell-execute->ParentFork");
-    }else{
-        /*Now we are in parent process*/
-        int ret_stat;
-        waitpid(pid, &ret_stat, 0);
         if(ret_stat == 0){
-            printf("child terminated succesfully\n");
-        }
-        else{
-            printf("Child terminated with error");
+            printf("child %d terminated succesfully\n", wpid);
+        }else{
+            printf("Child %d terminated with error", wpid);
             /*Further checks to be added here*/
         }
-        
+    }
+
+
+       
     /*process part ends and function can return to receive new calls*/
 
 

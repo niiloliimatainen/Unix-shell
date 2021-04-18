@@ -6,7 +6,7 @@
 #define MAXLEN 1024
 
 typedef struct arg {
-    char data[MAXLEN];
+    char argv[MAXLEN];
     
     struct arg *next;
 } Arg;
