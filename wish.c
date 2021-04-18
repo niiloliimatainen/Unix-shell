@@ -1,6 +1,7 @@
 /*
 Sources:
     1. https://brennan.io/2015/01/16/write-a-shell-in-c/
+    2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file
 */
 
 #include <stdio.h>
@@ -19,6 +20,7 @@ void shell_execute(char **args, int size);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
 void batch_mode(FILE *file);
+FILE * wish_redirect(char *fname);
 
 
 /* Parsing the arguments and executing them */
@@ -31,6 +33,7 @@ int main(int argc, char *argv[]) {
     
     /* If one argument is given, executes that file with batch mode */
     } else if (argc == 2) {
+
         if ((file = fopen(argv[1], "r")) == NULL) {
                 write_error();
 			    exit(1);
@@ -64,6 +67,7 @@ void interactive_mode() {
     free(buffer);
 }
 
+
 /* Reading commands from .wh type of file and executing them */
 void batch_mode(FILE *file) {
     char *buffer = NULL;
@@ -81,6 +85,7 @@ void batch_mode(FILE *file) {
 void parse_command(char *buffer) {
     char *token, **args, delim[1] = " ";
     int index = 0, size, maxlen = MAXLEN;
+    FILE *file = NULL;
 
     /* Return if input is empty, else remove newline from the end */ 
     if ((size = strcspn(buffer, "\n")) == 0) {
@@ -109,54 +114,44 @@ void parse_command(char *buffer) {
         exit(0);
     }
 
-
     while (1) {
-
-        while (1) {
-            args[index] = token;
-            index++;
-
-            if (index >= MAXLEN) {
-                maxlen += MAXLEN;
-                if ((args = realloc(args, maxlen * sizeof(char*))) == NULL) {
-                    write_error();
-                    exit(0);
-                }
-            }
-
-            if (((token = strtok(NULL, delim)) == NULL) || (strcmp(token, "&") == 0)) {
-                break;
-            }
-        }
-        
         if (token == NULL) {
             break;
-        
-        } else if (strcmp(token, "&")) {
-            token = strtok(NULL, delim);
+
+        } else if (strcmp(">", token) == 0) {
+
+            /* If no output file, the output is written to stdout */
+            if ((token = strtok(NULL, delim)) == NULL) {
+                break;
+            }
+            file = wish_redirect(token);
+            break;
         }
 
+        args[index] = token;
+        index++;
 
-
-
-     /*   } else if (strcmp("cd", token) == 0) {
-            cd(token);
-        
-        } else if (strcmp("path", token) == 0) {
-            printf("polkujuttuja\n");
-
-        } else {
-            printf("juhuu\n");
+        if (index >= MAXLEN) {
+            maxlen += MAXLEN;
+            if ((args = realloc(args, maxlen * sizeof(char*))) == NULL) {
+                write_error();
+                exit(0);
+            }
         }
-             shell_execute(token);
-
-        */
+        
+        token = strtok(NULL, delim);
     }
-
+    
     shell_execute(args, index);
     free(args);
+    
+    /* If there is redirect, close the file and resume standard behavior of stdout */
+    if (file != NULL) {
+        fclose(file);
+        /* This is taken from 2. source */
+        freopen("/dev/tty", "w", stdout);
+    }
 }
-
 
 
 void write_error() {
@@ -184,77 +179,18 @@ void wish_path() {
 }
 
 
-void wish_redirect() {
-
+FILE * wish_redirect(char *fname) {
+    FILE *file;
+    if ((file = freopen(fname, "w", stdout)) == NULL) {
+        write_error();
+    }
+    return file;
 }
 
 
 void shell_execute(char **args, int size) {
-    /*NOTE: Now expects only one command: args[] = command, arg1, arg2...*/
-    int counter = 0;
     for (int i = 0; i < size; i++) {
-        if (strcmp("&", args[i]) == 0){
-            counter++;
-        }
+        printf("%s", args[i]);
     }
-    printf("counter:%d\n", counter);
-    /*Somewhere here should be a loop to start multiple processes at once*/
-    /*Need to figure out if these commands are builtins and should be ran at the main process and not in child*/
-    
-    /*process part starts*/
-    pid_t pid, wpid;
-
-    pid = fork();
-    /*Fork returns pid of child to parent and pid of 0 to child*/
-    /*So child i pid=0 and parent is something else*/
-    if (pid == 0){
-        /*Launch program in child process*/
-        /*execvp(prgrm name, arguments vector)*/
-        if (execvp(args[0],args) == -1){
-            fprintf("Something happened when launching program %s", args[0]);
-            perror("Shell-execute->execvp");
-        }
-
-    }else if (pid < 0){
-        /*Fork has failed if process id is less than */
-        perror("Shell-execute->ParentFork");
-    }else{
-        /*Now we are in parent process*/
-        int ret_stat;
-        waitpid(pid, &ret_stat, 0);
-        if(ret_stat == 0){
-            printf("child terminated succesfully\n");
-        }
-        else{
-            printf("Child terminated with error");
-            /*Further checks to be added here*/
-        }
-        
-    /*process part ends and function can return to receive new calls*/
-
-
-
-
-
-
-    /*CASE INTERACTIVE*/
-    /* Fork() current process to create a copy
-       to know which process is which, we look at the process id's
-       -> parent has child_pid of child and child has child_pid of 0
-       
-       use exec variant execvp() (or something) to run wanted program in child process created by fork
-       exec + v(takes vector of parameters) p (finds program by its name)
-
-       parent waits until child has completed
-       add a shitton of if's and error checks and validate that child process has ended properly
-       after that we can go on and start doing other stuff
-    */
-   /*CASE BATCH*/
-   /*For i in commands i*/
-
-   
-    printf("\n");
-    return;
-
 }
 
