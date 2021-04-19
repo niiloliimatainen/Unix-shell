@@ -161,47 +161,6 @@ void parse_command(char *buffer) {
 }
 
 
- /* Helper function to write errors */
-void write_error(int flag) {
-    char error_message[MAXLEN];
-
-    /* -1 -> error occured in malloc, realloc or file opening */
-    if (flag == -1) {
-        strcpy(error_message, "An error has occurred\n");
-
-    /* 0 -> Shell was invoked with more than one batch file */
-    } else if (flag == 0) { 
-        strcpy(error_message, "Shell can be invoked with only one batch file\n");
-
-    /* 1 -> there was a wrong amount of arguments in exit command */
-    } else if (flag == 1) {
-        strcpy(error_message, "'exit' command takes no arguments\n");
-        
-    /* 2 -> there was 0 or >1 arguments in cd command */    
-    } else if (flag == 2) {
-        strcpy(error_message, "'cd' command takes precisely one argument\n");
-    
-    /* 3 -> can't find the directory that was given to cd */
-    } else if (flag == 3) {
-        strcpy(error_message, "No such directory\n");
-    
-    /* 4 -> there must be a new command after '&' */
-    } else if (flag == 4) {
-        strcpy(error_message, "No command is given after '&'\n");
-
-    /* 5 -> there can't be '&' in path command */
-    } else if (flag == 5) {
-        strcpy(error_message, "'path' command and '&' can't be the in same statement\n");
-    
-    /* If flag is something else, write universal error message */
-    } else {
-        strcpy(error_message, "An error has occurred\n");
-    }
-
-    write(STDERR_FILENO, error_message, strlen(error_message));
-}
-
-
 /* Built-in command for cd */
 void wish_cd(char **args, int size) {
     if (size != 1) {
@@ -314,7 +273,6 @@ void wish_launch(char **args, int size){
 void shell_fork_exec(char **args) {   
     /*NOTE: Now expects only one command: args[] = command, arg1, arg2...*/    
     /*for (int i = 0; i < size; i++) {
-
         if (strcmp("&", args[i]) == 0){
             counter++;
         }
@@ -365,7 +323,6 @@ void shell_fork_exec(char **args) {
        
        use exec variant execvp() (or something) to run wanted program in child process created by fork
        exec + v(takes vector of parameters) p (finds program by its name)
-
        parent waits until child has completed
        add a shitton of if's and error checks and validate that child process has ended properly
        after that we can go on and start doing other stuff
@@ -379,3 +336,43 @@ void shell_fork_exec(char **args) {
 
 }
 
+
+ /* Helper function to write errors */
+void write_error(int flag) {
+    char error_message[MAXLEN];
+
+    /* -1 -> error occured in malloc, realloc or file opening */
+    if (flag == -1) {
+        strcpy(error_message, "An error has occurred\n");
+
+    /* 0 -> Shell was invoked with more than one batch file */
+    } else if (flag == 0) { 
+        strcpy(error_message, "Shell can be invoked with only one batch file\n");
+
+    /* 1 -> there was a wrong amount of arguments in exit command */
+    } else if (flag == 1) {
+        strcpy(error_message, "'exit' command takes no arguments\n");
+        
+    /* 2 -> there was 0 or >1 arguments in cd command */    
+    } else if (flag == 2) {
+        strcpy(error_message, "'cd' command takes precisely one argument\n");
+    
+    /* 3 -> can't find the directory that was given to cd */
+    } else if (flag == 3) {
+        strcpy(error_message, "No such directory\n");
+    
+    /* 4 -> there must be a new command after '&' */
+    } else if (flag == 4) {
+        strcpy(error_message, "No command is given after '&'\n");
+
+    /* 5 -> there can't be '&' in path command */
+    } else if (flag == 5) {
+        strcpy(error_message, "'path' command and '&' can't be the in same statement\n");
+    
+    /* If flag is something else, write universal error message */
+    } else {
+        strcpy(error_message, "An error has occurred\n");
+    }
+
+    write(STDERR_FILENO, error_message, strlen(error_message));
+}
