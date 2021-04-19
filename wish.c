@@ -241,7 +241,7 @@ void wish_launch(char **args, int size){
 
     /* Test if command is built-in */
     if (strcmp("cd", args[0]) == 0) {
-        wish_cd(args);
+        wish_cd(args, size);
         return;
     
     } else if (strcmp("path", args[0]) == 0) {
