@@ -65,7 +65,7 @@ void interactive_mode() {
             parse_command(buffer);
         }
     }
-    
+
     free(buffer);
 }
 
@@ -123,6 +123,7 @@ void parse_command(char *buffer) {
         if (token == NULL) {
             break;
 
+        /* Call for redirect if '>' is found */
         } else if (strcmp(">", token) == 0) {
 
             /* If no output file, the output is written to stdout */
@@ -184,9 +185,13 @@ void write_error(int flag) {
     } else if (flag == 3) {
         strcpy(error_message, "No such directory\n");
     
-    /*  */
+    /* 4 -> there must be a new command after '&' */
     } else if (flag == 4) {
-        strcpy(error_message, "No command is given after ampersand\n");
+        strcpy(error_message, "No command is given after '&'\n");
+
+    /* 5 -> there can't be '&' in path command */
+    } else if (flag == 5) {
+        strcpy(error_message, "'path' command and '&' can't be the in same statement\n");
     
     /* If flag is something else, write universal error message */
     } else {
@@ -234,7 +239,15 @@ void wish_launch(char **args, int size){
     char **command;
     int maxlen = MAXLEN, i_args, i_command = 0;
 
-    /*built in testit*/
+    /* Test if command is built-in */
+    if (strcmp("cd", args[0]) == 0) {
+        wish_cd(args);
+        return;
+    
+    } else if (strcmp("path", args[0]) == 0) {
+        wish_path(args, size);
+        return;
+    }
 
 
     /* Allocating memory for command list that stores one command and its arguments at a time */
