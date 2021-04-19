@@ -8,7 +8,7 @@ Sources:
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <limits.h>
 
 #define MAXLEN 64
 
@@ -255,16 +255,14 @@ void wish_exec(char **args, int size){
 }
 
 void shell_fork_exec(char **args) {   
-    /*NOTE: Now expects only one command: args[] = command, arg1, arg2...*/    
-    /*for (int i = 0; i < size; i++) {
+    /*check for access before execution*/
+    int a1, a2;
+    /*Get current path*/
+  
+    for i in path... 
+    a = access(path[i], )
 
-        if (strcmp("&", args[i]) == 0){
-            counter++;
-        }
-    }*/
-    /*Somewhere here should be a loop to start multiple processes at once*/
-    /*Need to figure out if these commands are builtins and should be ran at the main process and not in child*/
-    
+
     /*process part starts*/
     pid_t pid;
     printf("Parent:PID:%d, PPID:%d\n", getpid(), getppid());
@@ -280,7 +278,7 @@ void shell_fork_exec(char **args) {
             printf("PID:%d, PPID:%d\n", getpid(), getppid());
             /*Launch program in child process*/
             /*execvp(prgrm name, arguments vector)*/
-            if (execvp(args[0],args) == -1){
+            if (execv(args[0],args) == -1){
 
                 printf("Something happened when launching program %s", args[0]);
                 perror("Shell-execute->execvp");
