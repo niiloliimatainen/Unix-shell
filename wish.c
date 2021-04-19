@@ -311,21 +311,26 @@ void wish_launch(char **args, int size){
 
 /*check for access before execution*/
 const char* check_path(char* prog_name){
-    char* path = NULL;
+    char path[50];
+    const char *q = path; 
     size_t s = sizeof(char) * MAXLEN;
     int a;
+
+    printf("%s\n\n", PATH_ARRAY[0]);
     /*Get current pathlist*/
     for(int i=0; PATH_ARRAY[i] != NULL; i++){
+        printf("moi\n");
         strcpy(path, PATH_ARRAY[i]);
-        /*strncat(path, "/", s);
-        strncat(path, prog_name, s);*/
-        printf("P_%s", path);
-        a = access(path, X_OK);
+        strncat(path, "/", s);
+        strncat(path, prog_name, s);
+    
+
+        a = access(q, X_OK);
 
         if (a == 0){
             printf("A:%d", a);
             
-            return path;
+            return q;
         }
        
         
@@ -339,7 +344,8 @@ void shell_fork_exec(char **args) {
         printf("No access!\n");
         return;
     }
-    printf("THIS IS PATH IN EXEC:%s", path);
+    printf("THIS IS PATH IN EXEC:%s\n", path);
+    printf("THIS IS ARG:%s\n", args[1]);
 
     /*process part starts*/
     pid_t pid;
