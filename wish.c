@@ -14,16 +14,17 @@ Sources:
 
 
 void interactive_mode();
-void write_error();
+void write_error(int flag);
 void parse_command(char *buffer);
 void shell_fork_exec(char **args);
-void wish_exec(char **args, int size);
+void wish_launch(char **args, int size);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
 void batch_mode(FILE *file);
 void wish_path(char **args, int size);
 const char* check_path(char* prog_name);
 FILE * wish_redirect(char *fname);
+
 
 
 /* Parsing the arguments and executing them */
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]) {
     } else if (argc == 2) {
 
         if ((file = fopen(argv[1], "r")) == NULL) {
-                write_error();
+                write_error(-1);
 			    exit(1);
         } 
         batch_mode(file);
@@ -47,7 +48,8 @@ int main(int argc, char *argv[]) {
    
     /* If more than one argument is give, exit the program */
     } else {
-        return 0;
+        write_error(0);
+        exit(1);
     }
     printf("\n");
     return 0;
@@ -62,12 +64,11 @@ void interactive_mode() {
     while (1) {
         printf("wish> ");
 
-        if (getline(&buffer, &bufsize, stdin) == EOF) {
-            exit(0);
+        if (getline(&buffer, &bufsize, stdin) != EOF) {
+            parse_command(buffer);
         }
-
-        parse_command(buffer);
     }
+
     free(buffer);
 }
 
@@ -93,7 +94,6 @@ void parse_command(char *buffer) {
 
     /* Return if input is empty, else remove newline from the end */ 
     if ((size = strcspn(buffer, "\n")) == 0) {
-        write_error();
         return;
 
     } else {
@@ -105,18 +105,18 @@ void parse_command(char *buffer) {
     /* Own implementation of exit command */
     if (strcmp("exit", token) == 0) {
         if ((token = strtok(NULL, " ")) != NULL) {
-            write_error();
+            write_error(1);
             return;
         } else {
             free(buffer);
-            exit(0);
+            exit(1);
         }
     }
 
     /* Allocate memory for args list */
     if ((args = malloc(maxlen * sizeof(char*))) == NULL) {
-        write_error();
-        exit(0);
+        write_error(0);
+        exit(1);
     }
 
    /* Looping through commands/arguments and adding them to args list */
@@ -126,6 +126,7 @@ void parse_command(char *buffer) {
         if (token == NULL) {
             break;
 
+        /* Call for redirect if '>' is found */
         } else if (strcmp(">", token) == 0) {
 
             /* If no output file, the output is written to stdout */
@@ -143,15 +144,15 @@ void parse_command(char *buffer) {
         if (index >= MAXLEN) {
             maxlen += MAXLEN;
             if ((args = realloc(args, maxlen * sizeof(char*))) == NULL) {
-                write_error();
-                exit(0);
+                write_error(-1);
+                exit(1);
             }
         }
         token = strtok(NULL, delim);
     }
 
     args[index] = NULL;
-    wish_exec(args, index);
+    wish_launch(args, index);
     free(args);
     
     /* If there is redirect, close the file and resume standard behavior of stdout */
@@ -164,8 +165,42 @@ void parse_command(char *buffer) {
 
 
  /* Helper function to write errors */
-void write_error() {
-    char error_message[30] = "An error has occurred\n";
+void write_error(int flag) {
+    char error_message[MAXLEN];
+
+    /* -1 -> error occured in malloc, realloc or file opening */
+    if (flag == -1) {
+        strcpy(error_message, "An error has occurred\n");
+
+    /* 0 -> Shell was invoked with more than one batch file */
+    } else if (flag == 0) { 
+        strcpy(error_message, "Shell can be invoked with only one batch file\n");
+
+    /* 1 -> there was a wrong amount of arguments in exit command */
+    } else if (flag == 1) {
+        strcpy(error_message, "'exit' command takes no arguments\n");
+        
+    /* 2 -> there was 0 or >1 arguments in cd command */    
+    } else if (flag == 2) {
+        strcpy(error_message, "'cd' command takes precisely one argument\n");
+    
+    /* 3 -> can't find the directory that was given to cd */
+    } else if (flag == 3) {
+        strcpy(error_message, "No such directory\n");
+    
+    /* 4 -> there must be a new command after '&' */
+    } else if (flag == 4) {
+        strcpy(error_message, "No command is given after '&'\n");
+
+    /* 5 -> there can't be '&' in path command */
+    } else if (flag == 5) {
+        strcpy(error_message, "'path' command and '&' can't be the in same statement\n");
+    
+    /* If flag is something else, write universal error message */
+    } else {
+        strcpy(error_message, "An error has occurred\n");
+    }
+
     write(STDERR_FILENO, error_message, strlen(error_message));
 }
 
@@ -173,12 +208,12 @@ void write_error() {
 /* Built-in command for cd */
 void wish_cd(char **args, int size) {
     if (size != 1) {
-        write_error();
+        write_error(2);
     
     } else {
         /* Check if chdir succeeds */
         if (chdir(args[1]) == -1) {
-            write_error();
+            write_error(3);
         }
     }
 }
@@ -228,24 +263,32 @@ FILE * wish_redirect(char *fname) {
 
     /* Redirecting stdout to fname */
     if ((file = freopen(fname, "w", stdout)) == NULL) {
-        write_error();
+        write_error(-1);
     }
     return file;
 }
 
 
 /* Function to launch built-in commands or a process */
-void wish_exec(char **args, int size){
+void wish_launch(char **args, int size){
     char **command;
     int maxlen = MAXLEN, i_args, i_command = 0;
 
-    /*built in testit*/
+    /* Test if command is built-in */
+    if (strcmp("cd", args[0]) == 0) {
+        wish_cd(args, size);
+        return;
+    
+    } else if (strcmp("path", args[0]) == 0) {
+        wish_path(args, size);
+        return;
+    }
 
 
     /* Allocating memory for command list that stores one command and its arguments at a time */
     if ((command = malloc(maxlen * sizeof(char*))) == NULL) {
-        write_error();
-        exit(0);
+        write_error(-1);
+        exit(1);
     }
 
     /* Looping through args list that holds all the commands/arguments from the user's input */
@@ -256,7 +299,7 @@ void wish_exec(char **args, int size){
             
             /* If no new command after ampersand, write error and return */
             if (args[i_args + 1] == NULL) {
-                write_error();
+                write_error(4);
                 return;
             }
 
@@ -277,8 +320,8 @@ void wish_exec(char **args, int size){
             if (i_command >= MAXLEN) {
                 maxlen += MAXLEN;
                 if ((command = realloc(command, maxlen * sizeof(char*))) == NULL) {
-                    write_error();
-                    exit(0);
+                    write_error(-1);
+                    exit(1);
                 }
             }
             i_command++;
