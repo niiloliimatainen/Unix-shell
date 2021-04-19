@@ -12,6 +12,8 @@ Sources:
 
 #define MAXLEN 64
 
+/*Bad programming here: global list :)*/
+char **PATH_ARRAY;
 
 void interactive_mode();
 void write_error(int flag);
@@ -31,7 +33,14 @@ FILE * wish_redirect(char *fname);
 int main(int argc, char *argv[]) {
     FILE *file;
     /*INIT path*/
-    wish_path(NULL, 1);
+     if ((PATH_ARRAY = malloc(PATH_MAX * sizeof(char*))) == NULL) {
+        write_error(0);
+        exit(1);
+    }
+
+
+    
+
     /* If no arguments given, starts an interactive mode */
     if (argc == 1) {
         interactive_mode();
@@ -207,7 +216,7 @@ void write_error(int flag) {
 
 /* Built-in command for cd */
 void wish_cd(char **args, int size) {
-    if (size != 1) {
+    if (size != 2) {
         write_error(2);
     
     } else {
@@ -221,12 +230,7 @@ void wish_cd(char **args, int size) {
 
 void wish_path(char **args, int size) {
     FILE* path;  
-    /*If path file doesn't exist, we create the default path /bin into the pathfile*/
-    if ((path = fopen("path.txt", "r")) == NULL) {
-        path = fopen("path.txt", "w");
-        fprintf(path, "%s\n", "/bin");
-        fclose(path);
-    }
+  
     for(int i=1; i < size; i++){
         if(strcmp(args[i], "&") == 0){
             write_error(5);
@@ -252,6 +256,7 @@ void wish_path(char **args, int size) {
         for(int i=1; i < size; i++){
             fprintf(path, "%s\n",args[i]);  
         }
+        fclose(path);
     }
 }
 
@@ -359,10 +364,14 @@ const char* check_path(char* prog_name){
     }
 
     while (getline(&buffer, &bufsize, path) != EOF) { 
-       buffer[strcspn(buffer, "\n")] = '\0'; 
-       strncat(buffer, prog_name, 1);
+       buffer[strcspn(buffer, "\n")] = '/'; 
+       printf("EKAb:%s",buffer);
+       strncat(buffer, prog_name, sizeof(prog_name));
+       printf("BUFFER:%s", buffer);
+       printf("\n");
        a = access(buffer, X_OK);
        if (a == 0){
+           printf("A:%d", a);
            return buffer;
        }
     }
@@ -378,7 +387,7 @@ void shell_fork_exec(char **args) {
         printf("No access jne");
         return;
     }
-    printf("%s", path);
+    printf("THIS IS PATH IN EXEC:%s", path);
 
     /*process part starts*/
     pid_t pid;
@@ -396,7 +405,7 @@ void shell_fork_exec(char **args) {
             /*Launch program in child process*/
             /*execv(prgrm path, arguments vector)*/
             if (execv(path,args) == -1){
-
+                
                 printf("Something happened when launching program %s", args[0]);
                 perror("Shell-execute->execvp");
             }
