@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     FILE *file;
 
     /*INIT path*/
-    if ((PATH_ARRAY = malloc(PATH_MAX * sizeof(char*))) == NULL) {
+    if ((PATH_ARRAY = malloc(MAXLEN * sizeof(char*))) == NULL) {
         write_error(0);
         exit(1);
     }
@@ -190,7 +190,7 @@ void wish_cd(char **args, int size) {
 
 
 void wish_path(char **args, int size) {
-    int i;
+    int i, maxlen = MAXLEN;
     /*Check for illegal & command*/
     for(i=1; i < size; i++){
         if(strcmp(args[i], "&") == 0){
@@ -201,6 +201,7 @@ void wish_path(char **args, int size) {
 
     /*Empty current paths*/
     for (i=0; PATH_ARRAY[i] != NULL; i++){
+        printf("moro\n");
         PATH_ARRAY[i] = NULL;
     }
     
@@ -212,10 +213,19 @@ void wish_path(char **args, int size) {
     
     /*Add all user provided paths to pathlist*/
     for(i=0; i < size; i++){
+        printf("huihui\n");
+        if (i >= MAXLEN) {
+            maxlen += MAXLEN;
+            if ((args = realloc(PATH_ARRAY, maxlen * sizeof(char*))) == NULL) {
+                write_error(-1);
+                exit(1);
+            }
+        }
+        printf("Tätä me laitetaa %s\n", args[i+1]);
         PATH_ARRAY[i] = args[i+1];
         
     }
-    PATH_ARRAY[size] = NULL;
+    printf("%d       %d\n", size, i);
     printf("IN WISH_PATH\n");
     for (i=0; PATH_ARRAY[i] != NULL; i++){
         printf("%s\n",PATH_ARRAY[i]);
