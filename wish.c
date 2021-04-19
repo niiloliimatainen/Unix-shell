@@ -21,13 +21,16 @@ void wish_exec(char **args, int size);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
 void batch_mode(FILE *file);
+void wish_path(char **args, int size);
+const char* check_path(char* prog_name);
 FILE * wish_redirect(char *fname);
 
 
 /* Parsing the arguments and executing them */
 int main(int argc, char *argv[]) {
     FILE *file;
-
+    /*INIT path*/
+    wish_path(NULL, 1);
     /* If no arguments given, starts an interactive mode */
     if (argc == 1) {
         interactive_mode();
@@ -181,8 +184,40 @@ void wish_cd(char **args, int size) {
 }
 
 
-void wish_path() {
+void wish_path(char **args, int size) {
+    FILE* path;  
+    /*If path file doesn't exist, we create the default path /bin into the pathfile*/
+    if ((path = fopen("path.txt", "r")) == NULL) {
+        path = fopen("path.txt", "w");
+        fprintf(path, "%s\n", "/bin");
+        fclose(path);
+    }
+    for(int i=1; i < size; i++){
+        if(strcmp(args[i], "&") == 0){
+            write_error(5);
+            return;
+        }  
+    }
 
+    /*If user gives no path, restore default /bin*/ 
+    if (size == 1){
+        if ((path = fopen("path.txt", "w")) == NULL) {
+            write_error(-1);
+            exit(1);
+        }
+        fprintf(path, "%s\n","/bin");
+        fclose(path);
+    }
+        /*Add all user provided paths to pathfile*/
+    else{
+        if ((path = fopen("path.txt", "w")) == NULL) {
+            write_error(-1);
+            exit(1);
+        }
+        for(int i=1; i < size; i++){
+            fprintf(path, "%s\n",args[i]);  
+        }
+    }
 }
 
 
@@ -267,15 +302,40 @@ void wish_exec(char **args, int size){
     free(command);
 }
 
+/*check for access before execution*/
+const char* check_path(char* prog_name){
+    FILE* path;
+    char *buffer = NULL;
+    size_t bufsize = 0;
+    int a;
+    
+    /*Get current pathlist*/
+    if ((path = fopen("path.txt", "r")) == NULL) {
+            write_error(-1);
+            exit(1);
+    }
+
+    while (getline(&buffer, &bufsize, path) != EOF) { 
+       buffer[strcspn(buffer, "\n")] = '\0'; 
+       strncat(buffer, prog_name, 1);
+       a = access(buffer, X_OK);
+       if (a == 0){
+           return buffer;
+       }
+    }
+    
+    free(buffer);
+    return "NOPATH";
+}
 
 void shell_fork_exec(char **args) {   
-    /*check for access before execution*/
-    int a1, a2;
-    /*Get current path*/
-  
-    for i in path... 
-    a = access(path[i], )
 
+    const char* path = check_path(args[0]);
+    if (strcmp(path, "NOPATH") == 0){
+        printf("No access jne");
+        return;
+    }
+    printf("%s", path);
 
     /*process part starts*/
     pid_t pid;
@@ -291,8 +351,8 @@ void shell_fork_exec(char **args) {
         if (pid == 0){
             printf("PID:%d, PPID:%d\n", getpid(), getppid());
             /*Launch program in child process*/
-            /*execvp(prgrm name, arguments vector)*/
-            if (execv(args[0],args) == -1){
+            /*execv(prgrm path, arguments vector)*/
+            if (execv(path,args) == -1){
 
                 printf("Something happened when launching program %s", args[0]);
                 perror("Shell-execute->execvp");
