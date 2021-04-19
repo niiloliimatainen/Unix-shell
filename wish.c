@@ -77,11 +77,11 @@ void batch_mode(FILE *file) {
     while (getline(&buffer, &bufsize, file) != EOF) {
         parse_command(buffer);
     }
-    printf("hommat toimi\n");
+
     free(buffer);
 }
 
-
+/* Parsing every command/argument separated with whitespace to args list */
 /* Inspiration for args list is taken from 1. source */
 void parse_command(char *buffer) {
     char *token, **args, delim[1] = " ";
@@ -110,12 +110,16 @@ void parse_command(char *buffer) {
         }
     }
 
+    /* Allocate memory for args list */
     if ((args = malloc(maxlen * sizeof(char*))) == NULL) {
         write_error();
         exit(0);
     }
 
+   /* Looping through commands/arguments and adding them to args list */
     while (1) {
+        
+        /* If no more commands/arguments, stop the loop */
         if (token == NULL) {
             break;
 
@@ -132,6 +136,7 @@ void parse_command(char *buffer) {
         args[index] = token;
         index++;
 
+        /* Allocate more memory for args list if needed */
         if (index >= MAXLEN) {
             maxlen += MAXLEN;
             if ((args = realloc(args, maxlen * sizeof(char*))) == NULL) {
@@ -155,13 +160,14 @@ void parse_command(char *buffer) {
 }
 
 
+ /* Helper function to write errors */
 void write_error() {
     char error_message[30] = "An error has occurred\n";
     write(STDERR_FILENO, error_message, strlen(error_message));
 }
 
 
-/*Get user wanted path as param: f.ex: (current path) + /oskukoodaa/niilokoodaa*/
+/* Built-in command for cd */
 void wish_cd(char **args, int size) {
     if (size != 1) {
         write_error();
@@ -180,49 +186,56 @@ void wish_path() {
 }
 
 
+/* Built-in command for redirection. Function takes in filename where stdout is redirected. */
+/* Inspiration for freopen is taken from 2. source */
 FILE * wish_redirect(char *fname) {
     FILE *file;
+
+    /* Redirecting stdout to fname */
     if ((file = freopen(fname, "w", stdout)) == NULL) {
         write_error();
     }
     return file;
 }
 
-typedef struct arg {
-    char argv[MAXLEN];
-    
-    struct arg *next;
-} Arg;
 
-
+/* Function to launch built-in commands or a process */
 void wish_exec(char **args, int size){
     char **command;
     int maxlen = MAXLEN, i_args, i_command = 0;
 
     /*built in testit*/
 
-     if ((command = malloc(maxlen * sizeof(char*))) == NULL) {
+
+    /* Allocating memory for command list that stores one command and its arguments at a time */
+    if ((command = malloc(maxlen * sizeof(char*))) == NULL) {
         write_error();
         exit(0);
     }
 
-    for (i_args = 0; i_args < size; i_args++){
-        if (strcmp("&", args[i_args]) == 0){
+    /* Looping through args list that holds all the commands/arguments from the user's input */
+    for (i_args = 0; i_args < size; i_args++) {
+
+        /* If ampersand is found, execute command and its possible arguments */
+        if (strcmp("&", args[i_args]) == 0) {
             
+            /* If no new command after ampersand, write error and return */
             if (args[i_args + 1] == NULL) {
                 write_error();
                 return;
             }
-            /*forkki kutsu */
+
             shell_fork_exec(command);
 
             command[i_command + 1] = NULL;
 
+            /* Clearing the command list */
             for (i_command = 0; command[i_command] != NULL; i_command++) {
                 command[i_command] = NULL;
             }
-            i_command = -1;
+            i_command = 0;
 
+        /* Adding command and its possible arguments to command list */
         } else {
             command[i_command] = args[i_args];
 
@@ -233,11 +246,11 @@ void wish_exec(char **args, int size){
                     exit(0);
                 }
             }
+            i_command++;
         }
-        i_command++;
     }
+    /* Executing the last command that was given */
     shell_fork_exec(command);
-
 
     pid_t wpid;
     int ret_stat;
@@ -253,6 +266,7 @@ void wish_exec(char **args, int size){
 
     free(command);
 }
+
 
 void shell_fork_exec(char **args) {   
     /*check for access before execution*/
