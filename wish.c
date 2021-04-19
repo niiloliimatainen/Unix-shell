@@ -213,10 +213,13 @@ void wish_path(char **args, int size) {
     /*Add all user provided paths to pathlist*/
     for(i=0; i < size; i++){
         PATH_ARRAY[i] = args[i+1];
-        printf("PATH:%s", PATH_ARRAY[i]);  
+        
     }
     PATH_ARRAY[size] = NULL;
-    
+    printf("IN WISH_PATH\n");
+    for (i=0; PATH_ARRAY[i] != NULL; i++){
+        printf("%s\n",PATH_ARRAY[i]);
+    }
 }
 
 
@@ -311,21 +314,26 @@ void wish_launch(char **args, int size){
 
 /*check for access before execution*/
 const char* check_path(char* prog_name){
-    char* path = NULL;
+    for(int i=0; PATH_ARRAY[i] != NULL; i++){
+        printf("PATH VARLIST:%s\n", PATH_ARRAY[i]);
+    }
+    char path[MAXLEN];
+    const char* path_p = path;
     size_t s = sizeof(char) * MAXLEN;
     int a;
     /*Get current pathlist*/
     for(int i=0; PATH_ARRAY[i] != NULL; i++){
         strcpy(path, PATH_ARRAY[i]);
-        /*strncat(path, "/", s);
-        strncat(path, prog_name, s);*/
-        printf("P_%s", path);
-        a = access(path, X_OK);
-
+        strncat(path, "/", s);
+        strncat(path, prog_name, s);
+        
+        a = access(path_p, X_OK);
+        
+        
         if (a == 0){
             printf("A:%d", a);
             
-            return path;
+            return path_p;
         }
        
         
@@ -339,18 +347,18 @@ void shell_fork_exec(char **args) {
         printf("No access!\n");
         return;
     }
-    printf("THIS IS PATH IN EXEC:%s", path);
+    
 
     /*process part starts*/
     pid_t pid;
-    printf("Parent:PID:%d, PPID:%d\n", getpid(), getppid());
+    
 
     pid = fork();
     
     /*Fork returns pid of child to parent and pid of 0 to child*/
     /*So child i pid=0 and parent is something else*/
     if (pid == 0){
-        printf("PID:%d, PPID:%d\n", getpid(), getppid());
+        
         /*Launch program in child process*/
         /*execv(prgrm path, arguments vector)*/
         if (execv(path,args) == -1){
