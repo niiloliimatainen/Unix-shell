@@ -32,13 +32,14 @@ FILE * wish_redirect(char *fname);
 /* Parsing the arguments and executing them */
 int main(int argc, char *argv[]) {
     FILE *file;
+
     /*INIT path*/
-     if ((PATH_ARRAY = malloc(PATH_MAX * sizeof(char*))) == NULL) {
+    if ((PATH_ARRAY = malloc(PATH_MAX * sizeof(char*))) == NULL) {
         write_error(0);
         exit(1);
     }
-
-
+    PATH_ARRAY[0] = "/bin";
+    PATH_ARRAY[1] = NULL;
     
 
     /* If no arguments given, starts an interactive mode */
@@ -216,6 +217,7 @@ void write_error(int flag) {
 
 /* Built-in command for cd */
 void wish_cd(char **args, int size) {
+
     if (size != 2) {
         write_error(2);
     
@@ -229,35 +231,33 @@ void wish_cd(char **args, int size) {
 
 
 void wish_path(char **args, int size) {
-    FILE* path;  
-  
-    for(int i=1; i < size; i++){
+    int i;
+    /*Check for illegal & command*/
+    for(i=1; i < size; i++){
         if(strcmp(args[i], "&") == 0){
             write_error(5);
             return;
         }  
     }
 
-    /*If user gives no path, restore default /bin*/ 
+    /*Empty current paths*/
+    for (i=0; PATH_ARRAY[i] != NULL; i++){
+        PATH_ARRAY[i] = NULL;
+    }
+    
+    /*If no parameters, just empty the pathslist and return*/
+
     if (size == 1){
-        if ((path = fopen("path.txt", "w")) == NULL) {
-            write_error(-1);
-            exit(1);
-        }
-        fprintf(path, "%s\n","/bin");
-        fclose(path);
+        return;
     }
-        /*Add all user provided paths to pathfile*/
-    else{
-        if ((path = fopen("path.txt", "w")) == NULL) {
-            write_error(-1);
-            exit(1);
-        }
-        for(int i=1; i < size; i++){
-            fprintf(path, "%s\n",args[i]);  
-        }
-        fclose(path);
+    
+    /*Add all user provided paths to pathlist*/
+    for(i=0; i < size; i++){
+        PATH_ARRAY[i] = args[i+1];
+        printf("PATH:%s", PATH_ARRAY[i]);  
     }
+    PATH_ARRAY[size] = NULL;
+    
 }
 
 
@@ -352,39 +352,32 @@ void wish_launch(char **args, int size){
 
 /*check for access before execution*/
 const char* check_path(char* prog_name){
-    FILE* path;
-    char *buffer = NULL;
-    size_t bufsize = 0;
+    char* path = NULL;
+    size_t s = sizeof(char) * MAXLEN;
     int a;
-    
     /*Get current pathlist*/
-    if ((path = fopen("path.txt", "r")) == NULL) {
-            write_error(-1);
-            exit(1);
-    }
+    for(int i=0; PATH_ARRAY[i] != NULL; i++){
+        strcpy(path, PATH_ARRAY[i]);
+        /*strncat(path, "/", s);
+        strncat(path, prog_name, s);*/
+        printf("P_%s", path);
+        a = access(path, X_OK);
 
-    while (getline(&buffer, &bufsize, path) != EOF) { 
-       buffer[strcspn(buffer, "\n")] = '/'; 
-       printf("EKAb:%s",buffer);
-       strncat(buffer, prog_name, sizeof(prog_name));
-       printf("BUFFER:%s", buffer);
-       printf("\n");
-       a = access(buffer, X_OK);
-       if (a == 0){
-           printf("A:%d", a);
-           return buffer;
-       }
+        if (a == 0){
+            printf("A:%d", a);
+            
+            return path;
+        }
+       
+        
     }
-    
-    free(buffer);
     return "NOPATH";
 }
 
 void shell_fork_exec(char **args) {   
-
     const char* path = check_path(args[0]);
     if (strcmp(path, "NOPATH") == 0){
-        printf("No access jne");
+        printf("No access!\n");
         return;
     }
     printf("THIS IS PATH IN EXEC:%s", path);
@@ -392,29 +385,26 @@ void shell_fork_exec(char **args) {
     /*process part starts*/
     pid_t pid;
     printf("Parent:PID:%d, PPID:%d\n", getpid(), getppid());
-    for (int x=0; x<1;x++){
-        
+
+    pid = fork();
     
-        
-        pid = fork();
-        
-        /*Fork returns pid of child to parent and pid of 0 to child*/
-        /*So child i pid=0 and parent is something else*/
-        if (pid == 0){
-            printf("PID:%d, PPID:%d\n", getpid(), getppid());
-            /*Launch program in child process*/
-            /*execv(prgrm path, arguments vector)*/
-            if (execv(path,args) == -1){
-                
-                printf("Something happened when launching program %s", args[0]);
-                perror("Shell-execute->execvp");
-            }
-        }else if (pid < 0){
-            /*Fork has failed if process id is less than */
-            perror("Shell-execute->ParentFork");
-    
+    /*Fork returns pid of child to parent and pid of 0 to child*/
+    /*So child i pid=0 and parent is something else*/
+    if (pid == 0){
+        printf("PID:%d, PPID:%d\n", getpid(), getppid());
+        /*Launch program in child process*/
+        /*execv(prgrm path, arguments vector)*/
+        if (execv(path,args) == -1){
+            
+            printf("Something happened when launching program %s", args[0]);
+            perror("Shell-execute->execvp");
         }
+    }else if (pid < 0){
+        /*Fork has failed if process id is less than */
+        perror("Shell-execute->ParentFork");
+
     }
+    
     /*Now we are in parent process*/
 
        
