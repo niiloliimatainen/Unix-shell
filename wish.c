@@ -61,12 +61,11 @@ void interactive_mode() {
     while (1) {
         printf("wish> ");
 
-        if (getline(&buffer, &bufsize, stdin) == EOF) {
-            exit(0);
+        if (getline(&buffer, &bufsize, stdin) != EOF) {
+            parse_command(buffer);
         }
-
-        parse_command(buffer);
     }
+    
     free(buffer);
 }
 
@@ -107,14 +106,14 @@ void parse_command(char *buffer) {
             return;
         } else {
             free(buffer);
-            exit(0);
+            exit(1);
         }
     }
 
     /* Allocate memory for args list */
     if ((args = malloc(maxlen * sizeof(char*))) == NULL) {
         write_error(0);
-        exit(0);
+        exit(1);
     }
 
    /* Looping through commands/arguments and adding them to args list */
@@ -142,7 +141,7 @@ void parse_command(char *buffer) {
             maxlen += MAXLEN;
             if ((args = realloc(args, maxlen * sizeof(char*))) == NULL) {
                 write_error(-1);
-                exit(0);
+                exit(1);
             }
         }
         token = strtok(NULL, delim);
@@ -241,7 +240,7 @@ void wish_launch(char **args, int size){
     /* Allocating memory for command list that stores one command and its arguments at a time */
     if ((command = malloc(maxlen * sizeof(char*))) == NULL) {
         write_error(-1);
-        exit(0);
+        exit(1);
     }
 
     /* Looping through args list that holds all the commands/arguments from the user's input */
@@ -274,7 +273,7 @@ void wish_launch(char **args, int size){
                 maxlen += MAXLEN;
                 if ((command = realloc(command, maxlen * sizeof(char*))) == NULL) {
                     write_error(-1);
-                    exit(0);
+                    exit(1);
                 }
             }
             i_command++;
