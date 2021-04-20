@@ -130,7 +130,17 @@ void parse_command(char *buffer) {
             if ((token = strtok(NULL, " ")) == NULL) {
                 break;
             }
-            file = wish_redirect(token);
+            char *tmp = token;
+            token = strtok(NULL, " ");
+
+            while (token != NULL) {
+                if (strcmp(">", token) == 0) {
+                    write_error(8);
+                    return;
+                }
+            }
+
+            file = wish_redirect(tmp);
             break;
         }
 
