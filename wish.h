@@ -1,3 +1,14 @@
+/****************************************************************/
+
+/* Creators: Niilo Liimantainen & Oskari Kivekäs */
+/* Date: 20.04.2021 */
+/* Sources: */
+/*   1. https://brennan.io/2015/01/16/write-a-shell-in-c/ */
+/*   2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file */
+    
+/****************************************************************/
+
+
 #ifndef wish_h
 #define wish_h
 
