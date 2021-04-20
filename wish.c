@@ -147,74 +147,6 @@ void parse_command(char *buffer) {
 }
 
 
-<<<<<<< HEAD
-
-
-/* Built-in command for cd */
-void wish_cd(char **args, int size) {
-    /*env variable must be reassigned after chdir, since env-variables are dir/process specific*/
-    char path[PATH_MAX] ="";
-    char* env = getenv("PATH");
-    const char* env_p = env;
-    const char* f_path = path;
-    if (size != 2) {
-        write_error(2);
-    
-    } else {
-        
-        /* Check if chdir succeeds */
-        if (chdir(args[1]) == -1) {
-            write_error(3);
-        }
-        
-    }
-}
-
-
-void wish_path(char **args, int size) {
-    int i;
-    /*Check for illegal & command*/
-    for(i=1; i < size; i++){
-        if(strcmp(args[i], "&") == 0){
-            write_error(5);
-            return;
-        }  
-    }
-    /*If no parameters, empty the path*/
-
-    if (size == 1){
-        putenv("PATH=");
-        return;
-    }
-    
-    /*Add all user provided paths to path*/
-    char path[PATH_MAX] ="PATH=";
-    for(i=1; i < size; i++){
-        strcat(path, args[i]);
-        strcat(path, "/ ");
-        
-    }
-    putenv(path);
-    printf("env:%s\n", getenv("PATH"));
-    
-}
-
-
-/* Built-in command for redirection. Function takes in filename where stdout is redirected. */
-/* Inspiration for freopen is taken from 2. source */
-FILE * wish_redirect(char *fname) {
-    FILE *file;
-
-    /* Redirecting stdout to fname */
-    if ((file = freopen(fname, "w", stdout)) == NULL) {
-        write_error(-1);
-    }
-    return file;
-}
-
-
-=======
->>>>>>> e69b2b315c404a70e45deb7c17e2211dd88c9391
 /* Function to launch built-in commands or a process */
 void wish_launch(char **args, int size){
     char **command;
@@ -297,27 +229,15 @@ const char* check_path(char* prog_name){
     char p[PATH_MAX], delim[1] = " ", *token, *p_path = getenv("PATH");
     const char* path = p;
     int a;
-<<<<<<< HEAD
-    /*split path by whitespace and add program name to path before checking access*/
-    token = strtok(p_path, delim);
-    
-    
-    while((token = strtok_r(p_path, " ", &p_path))){
-=======
 
     /*split path by whitespace and add program name to path before checking access*/    
     while ((token = strtok_r(p_path, delim, &p_path))) {
->>>>>>> e69b2b315c404a70e45deb7c17e2211dd88c9391
         
         /*access() and execv() require const char*, so we create path and change it to point p*/
         strcpy(p, token);
         strcat(p, prog_name);
         
         /*if path has wrx permissions, we return that path executor function*/
-<<<<<<< HEAD
-        printf("path:%s",path);
-=======
->>>>>>> e69b2b315c404a70e45deb7c17e2211dd88c9391
         a = access(path, X_OK);
         if (a == 0){
             return path;
