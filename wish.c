@@ -15,16 +15,16 @@ Sources:
 /*Bad programming here: global list :)*/
 
 
-void interactive_mode(char** PATH_ARRAY);
+void interactive_mode();
 void write_error(int flag);
-void parse_command(char *buffer, char** PATH_ARRAY);
-void shell_fork_exec(char **args, char** PATH_ARRAY);
-void wish_launch(char **args, int size, char** PATH_ARRAY);
+void parse_command(char *buffer);
+void shell_fork_exec(char **args);
+void wish_launch(char **args, int size);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
-void batch_mode(FILE *file, char** PATH_ARRAY);
-void wish_path(char **args, int size, char** PATH_ARRAY);
-const char* check_path(char* prog_name, char** PATH_ARRAY);
+void batch_mode(FILE *file);
+void wish_path(char **args, int size);
+const char* check_path(char* prog_name);
 FILE * wish_redirect(char *fname);
 
 
@@ -32,19 +32,15 @@ FILE * wish_redirect(char *fname);
 /* Parsing the arguments and executing them */
 int main(int argc, char *argv[]) {
     FILE *file;
-    char **PATH_ARRAY;
-    /*INIT path*/
-    if ((PATH_ARRAY = malloc(MAXLEN * sizeof(char*))) == NULL) {
-        write_error(0);
-        exit(1);
-    }
-    PATH_ARRAY[0] = "/bin";
-    PATH_ARRAY[1] = NULL;
-    
+
+    char path[100]="PATH=";
+    char *input = "/bin";
+    putenv(strcat(path, input));
+
 
     /* If no arguments given, starts an interactive mode */
     if (argc == 1) {
-        interactive_mode(PATH_ARRAY);
+        interactive_mode();
     
     /* If one argument is given, executes that file with batch mode */
     } else if (argc == 2) {
@@ -53,7 +49,7 @@ int main(int argc, char *argv[]) {
                 write_error(-1);
 			    exit(1);
         } 
-        batch_mode(file, PATH_ARRAY);
+        batch_mode(file);
         fclose(file);
    
     /* If more than one argument is give, exit the program */
@@ -67,7 +63,7 @@ int main(int argc, char *argv[]) {
 
 
 /* An infinite loop that takes commands from stdin and executes them. The loop stops when "exit" is given. */
-void interactive_mode(char** PATH_ARRAY) {
+void interactive_mode() {
     char *buffer = NULL;
     size_t bufsize = 0;
     
@@ -75,7 +71,7 @@ void interactive_mode(char** PATH_ARRAY) {
         printf("wish> ");
 
         if (getline(&buffer, &bufsize, stdin) != EOF) {
-            parse_command(buffer, PATH_ARRAY);
+            parse_command(buffer);
         }
     }
 
@@ -84,12 +80,12 @@ void interactive_mode(char** PATH_ARRAY) {
 
 
 /* Reading commands from .wh type of file and executing them */
-void batch_mode(FILE *file, char** PATH_ARRAY) {
+void batch_mode(FILE *file) {
     char *buffer = NULL;
     size_t bufsize = 0;
 
     while (getline(&buffer, &bufsize, file) != EOF) {
-        parse_command(buffer, PATH_ARRAY);
+        parse_command(buffer);
     }
 
     free(buffer);
@@ -97,7 +93,7 @@ void batch_mode(FILE *file, char** PATH_ARRAY) {
 
 /* Parsing every command/argument separated with whitespace to args list */
 /* Inspiration for args list is taken from 1. source */
-void parse_command(char *buffer, char** PATH_ARRAY) {
+void parse_command(char *buffer) {
     char *token, **args, delim[1] = " ";
     int index = 0, size, maxlen = MAXLEN;
     FILE *file = NULL;
@@ -162,7 +158,7 @@ void parse_command(char *buffer, char** PATH_ARRAY) {
     }
 
     args[index] = NULL;
-    wish_launch(args, index, PATH_ARRAY);
+    wish_launch(args, index);
     free(args);
     
     /* If there is redirect, close the file and resume standard behavior of stdout */
@@ -189,8 +185,10 @@ void wish_cd(char **args, int size) {
 }
 
 
-void wish_path(char **args, int size, char** PATH_ARRAY) {
-    int i, int maxlen = MAXLEN;
+void wish_path(char **args, int size) {
+    int i;
+    char path[100]="PATH=";
+
     /*Check for illegal & command*/
     for(i=1; i < size; i++){
         if(strcmp(args[i], "&") == 0){
@@ -198,38 +196,13 @@ void wish_path(char **args, int size, char** PATH_ARRAY) {
             return;
         }  
     }
-
-    /*Empty current paths*/
-    for (i=0; PATH_ARRAY[i] != NULL; i++){
-        printf("moro\n");
-        PATH_ARRAY[i] = NULL;
-    }
-    
-    /*If no parameters, just empty the pathslist and return*/
-
-    if (size == 1){
-        return;
-    }
     
     /*Add all user provided paths to pathlist*/
-    for(i=0; i < size; i++){
-        printf("huihui\n");
-        if (i >= MAXLEN) {
-            maxlen += MAXLEN;
-            if ((args = realloc(PATH_ARRAY, maxlen * sizeof(char*))) == NULL) {
-                write_error(-1);
-                exit(1);
-            }
-        }
-        printf("Tätä me laitetaa %s\n", args[i+1]);
-        PATH_ARRAY[i] = args[i+1];
-        
+    for(i=1; i < size; i++){    
+        strcat(path, args[i]);
     }
-    printf("%d       %d\n", size, i);
-    printf("IN WISH_PATH\n");
-    for (i=0; PATH_ARRAY[i] != NULL; i++){
-        printf("%s\n",PATH_ARRAY[i]);
-    }
+
+    putenv(path);
 }
 
 
@@ -247,8 +220,7 @@ FILE * wish_redirect(char *fname) {
 
 
 /* Function to launch built-in commands or a process */
-void wish_launch(char **args, int size, char** PATH_ARRAY){
-    
+void wish_launch(char **args, int size){
     char **command;
     int maxlen = MAXLEN, i_args, i_command = 0;
 
@@ -258,7 +230,7 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
         return;
     
     } else if (strcmp("path", args[0]) == 0) {
-        wish_path(args, size, PATH_ARRAY);
+        wish_path(args, size);
         return;
     }
 
@@ -281,7 +253,7 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
                 return;
             }
 
-            shell_fork_exec(command, PATH_ARRAY);
+            shell_fork_exec(command);
 
             command[i_command + 1] = NULL;
 
@@ -306,7 +278,7 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
         }
     }
     /* Executing the last command that was given */
-    shell_fork_exec(command, PATH_ARRAY);
+    shell_fork_exec(command);
 
     pid_t wpid;
     int ret_stat;
@@ -324,35 +296,29 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
 }
 
 /*check for access before execution*/
-const char* check_path(char* prog_name, char** PATH_ARRAY){
+const char* check_path(char* prog_name){
 
     char path[MAXLEN];
-    const char* path_p = path;
+    char* path_p;
     size_t s = sizeof(char) * MAXLEN;
     int a;
-
     /*Get current pathlist*/
-    for(int i=0; PATH_ARRAY[i] != NULL; i++){
-        strcpy(path, PATH_ARRAY[i]);
-        strncat(path, "/", s);
-        strncat(path, prog_name, s);
-        printf("IN check_path: %s\n", path);
-        a = access(path_p, X_OK);
+    printf("moro");
+    path_p = getenv("PATH");
+    printf("%s\n", path_p);
+    a = access(path_p, X_OK);
+    
+    if (a == 0){
+        printf("A:%d", a);
         
-        
-        if (a == 0){
-            printf("A:%d", a);
-            
-            return path_p;
-        }
-       
-        
+        return path_p;
     }
+       
     return "NOPATH";
 }
 
-void shell_fork_exec(char **args, char** PATH_ARRAY) {   
-    const char* path = check_path(args[0], PATH_ARRAY);
+void shell_fork_exec(char **args) {   
+    const char* path = check_path(args[0]);
     if (strcmp(path, "NOPATH") == 0){
         printf("No access!\n");
         return;
