@@ -126,9 +126,9 @@ void write_error(int flag) {
     } else if (flag == 5) {
         strcpy(error_message, "'&' and built-in command can be used in same statement\n");
 
-    /* 6 -> can't found right path for the command */
+    /* 6 -> command can't be found */
     } else if (flag == 6) {
-        strcpy(error_message, "Could not resolve command path\n");
+        strcpy(error_message, "Could not identify command\n");
 
     /* 7 -> The batch file is invalid */
     } else if (flag == 6) {

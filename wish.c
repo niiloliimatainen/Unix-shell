@@ -80,7 +80,7 @@ void batch_mode(FILE *file) {
 /* Parsing every command/argument separated with whitespace to args list */
 /* Inspiration for args list is taken from 1. source */
 void parse_command(char *buffer) {
-    char *token, **args, delim[1] = " ";
+    char *token, **args;
     int index = 0, size, maxlen = MAXLEN;
     FILE *file = NULL;
 
@@ -92,7 +92,7 @@ void parse_command(char *buffer) {
         buffer[size] = '\0';
     }
 
-    token = strtok(buffer, delim);
+    token = strtok(buffer, " ");
 
     /* Call wish_exit if the command is exit without arguments */
     if (strcmp("exit", token) == 0) {
@@ -120,7 +120,7 @@ void parse_command(char *buffer) {
         } else if (strcmp(">", token) == 0) {
 
             /* If no output file, the output is written to stdout */
-            if ((token = strtok(NULL, delim)) == NULL) {
+            if ((token = strtok(NULL, " ")) == NULL) {
                 break;
             }
             file = wish_redirect(token);
@@ -138,12 +138,16 @@ void parse_command(char *buffer) {
                 exit(1);
             }
         }
-        token = strtok(NULL, delim);
+        token = strtok(NULL, " ");
     }
 
     args[index] = NULL;
     wish_launch(args, index);
+
     free(args);
+    for (int i = 0; i < index; i++) {
+        args[i] = NULL;
+    }
     
     /* If there is redirect, close the file and resume standard behavior of stdout */
     if (file != NULL) {
@@ -224,6 +228,8 @@ void wish_launch(char **args, int size) {
             i_command++;
         }
     }
+
+    
     /* Executing the last command that was given */
     wish_fork_exec(command);
     /*When all commands have been send to children, main process waits here!*/
@@ -231,9 +237,9 @@ void wish_launch(char **args, int size) {
     int ret_stat;
     while((wpid = wait(&ret_stat)) != -1) {
 
-        if(ret_stat == 0){
+        if(ret_stat == 0) {
             /*We are ok, child terminated with success*/
-        }else{
+        }else {
             /*In case child terminated with error*/
             
         }
@@ -273,7 +279,7 @@ void wish_fork_exec(char **args) {
     /*Check for valid path*/
     const char* path = check_path(args[0]);
     
-    if (strcmp(path, "NOPATH") == 0){
+    if (strcmp(path, "NOPATH") == 0) {
         write_error(6);
         return;
     }
