@@ -218,6 +218,7 @@ void wish_launch(char **args, int size){
         if(ret_stat == 0){
             /*We are ok, child terminated with success*/
         }else{
+            
             /*In case child terminated with error*/
             
         }
