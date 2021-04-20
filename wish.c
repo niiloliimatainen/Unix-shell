@@ -226,18 +226,19 @@ void wish_launch(char **args, int size){
 
 /*check for access before execution*/
 const char* check_path(char* prog_name){
-    char p[PATH_MAX], delim[1] = " ", *token, *p_path = getenv("PATH");
+    char p[PATH_MAX], *token, *p_path = getenv("PATH");
     const char* path = p;
     int a;
 
     /*split path by whitespace and add program name to path before checking access*/    
-    while ((token = strtok_r(p_path, delim, &p_path))) {
+    while ((token = strtok_r(p_path, " ", &p_path))) {
         
         /*access() and execv() require const char*, so we create path and change it to point p*/
         strcpy(p, token);
         strcat(p, prog_name);
         
         /*if path has wrx permissions, we return that path executor function*/
+        printf("path:%s",path);
         a = access(path, X_OK);
         if (a == 0){
             return path;

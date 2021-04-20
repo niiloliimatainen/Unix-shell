@@ -9,17 +9,20 @@ Sources:
 
 /* Built-in command for cd */
 void wish_cd(char **args, int size) {
+    
     if (size != 2) {
         write_error(2);
     
     } else {
-        char path[PATH_MAX] ="PATH=";
+        static char path[PATH_MAX] ="";
         strcat(path, getenv("PATH"));
         /* Check if chdir succeeds */
         if (chdir(args[1]) == -1) {
             write_error(3);
         }
+        
         putenv(path);
+        printf("pathenv:%s",getenv("PATH"));
     }
     
 }
@@ -27,8 +30,8 @@ void wish_cd(char **args, int size) {
 
 void wish_path(char **args, int size) {
     int i;
-    char path[PATH_MAX] ="PATH=";
-
+    static char path[PATH_MAX] ="PATH=";
+    
     /*Check for illegal & command*/
     for(i=1; i < size; i++){
         if(strcmp(args[i], "&") == 0){
@@ -39,7 +42,11 @@ void wish_path(char **args, int size) {
     /*If no parameters, empty the path*/
 
     if (size == 1){
-        putenv("PATH=");
+        if(putenv("PATH=") != 0){
+            write_error(-1);
+            exit(1);
+        }
+    
         return;
     }
     
@@ -49,7 +56,11 @@ void wish_path(char **args, int size) {
         strcat(path, "/ ");
         
     }
-    putenv(path);
+    
+    if (putenv(path) != 0){
+        write_error(-1);
+        exit(1);
+    }
     
 }
 
