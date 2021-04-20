@@ -15,16 +15,16 @@ Sources:
 /*Bad programming here: global list :)*/
 
 
-void interactive_mode(char** PATH_ARRAY);
+void interactive_mode();
 void write_error(int flag);
-void parse_command(char *buffer, char** PATH_ARRAY);
-void shell_fork_exec(char **args, char** PATH_ARRAY);
-void wish_launch(char **args, int size, char** PATH_ARRAY);
+void parse_command(char *buffer);
+void wish_fork_exec(char **args);
+void wish_launch(char **args, int size);
 void wish_cd(char **args, int size);
 void wish_exit(char *token, char *buffer);
-void batch_mode(FILE *file, char** PATH_ARRAY);
-void wish_path(char **args, int size, char** PATH_ARRAY);
-const char* check_path(char* prog_name, char** PATH_ARRAY);
+void batch_mode(FILE *file);
+void wish_path(char **args, int size);
+const char* check_path(char* prog_name);
 FILE * wish_redirect(char *fname);
 
 
@@ -32,19 +32,14 @@ FILE * wish_redirect(char *fname);
 /* Parsing the arguments and executing them */
 int main(int argc, char *argv[]) {
     FILE *file;
-    char **PATH_ARRAY;
-    /*INIT path*/
-    if ((PATH_ARRAY = malloc(PATH_MAX * sizeof(char*))) == NULL) {
-        write_error(0);
-        exit(1);
-    }
-    PATH_ARRAY[0] = "/bin";
-    PATH_ARRAY[1] = NULL;
-    
+
+    /*INIT path enviroment variable*/
+    char path[PATH_MAX] ="PATH=";
+    putenv(strcat(path, "/bin/"));
 
     /* If no arguments given, starts an interactive mode */
     if (argc == 1) {
-        interactive_mode(PATH_ARRAY);
+        interactive_mode();
     
     /* If one argument is given, executes that file with batch mode */
     } else if (argc == 2) {
@@ -53,7 +48,7 @@ int main(int argc, char *argv[]) {
                 write_error(-1);
 			    exit(1);
         } 
-        batch_mode(file, PATH_ARRAY);
+        batch_mode(file);
         fclose(file);
    
     /* If more than one argument is give, exit the program */
@@ -67,7 +62,7 @@ int main(int argc, char *argv[]) {
 
 
 /* An infinite loop that takes commands from stdin and executes them. The loop stops when "exit" is given. */
-void interactive_mode(char** PATH_ARRAY) {
+void interactive_mode() {
     char *buffer = NULL;
     size_t bufsize = 0;
     
@@ -75,7 +70,7 @@ void interactive_mode(char** PATH_ARRAY) {
         printf("wish> ");
 
         if (getline(&buffer, &bufsize, stdin) != EOF) {
-            parse_command(buffer, PATH_ARRAY);
+            parse_command(buffer);
         }
     }
 
@@ -84,12 +79,12 @@ void interactive_mode(char** PATH_ARRAY) {
 
 
 /* Reading commands from .wh type of file and executing them */
-void batch_mode(FILE *file, char** PATH_ARRAY) {
+void batch_mode(FILE *file) {
     char *buffer = NULL;
     size_t bufsize = 0;
 
     while (getline(&buffer, &bufsize, file) != EOF) {
-        parse_command(buffer, PATH_ARRAY);
+        parse_command(buffer);
     }
 
     free(buffer);
@@ -97,7 +92,7 @@ void batch_mode(FILE *file, char** PATH_ARRAY) {
 
 /* Parsing every command/argument separated with whitespace to args list */
 /* Inspiration for args list is taken from 1. source */
-void parse_command(char *buffer, char** PATH_ARRAY) {
+void parse_command(char *buffer) {
     char *token, **args, delim[1] = " ";
     int index = 0, size, maxlen = MAXLEN;
     FILE *file = NULL;
@@ -162,7 +157,7 @@ void parse_command(char *buffer, char** PATH_ARRAY) {
     }
 
     args[index] = NULL;
-    wish_launch(args, index, PATH_ARRAY);
+    wish_launch(args, index);
     free(args);
     
     /* If there is redirect, close the file and resume standard behavior of stdout */
@@ -174,22 +169,27 @@ void parse_command(char *buffer, char** PATH_ARRAY) {
 }
 
 
+
+
 /* Built-in command for cd */
 void wish_cd(char **args, int size) {
-
+    char path[PATH_MAX] ="PATH=";
     if (size != 2) {
         write_error(2);
     
     } else {
+        strcat(path, getenv("PATH"));
         /* Check if chdir succeeds */
         if (chdir(args[1]) == -1) {
             write_error(3);
         }
+        putenv(path);
     }
+    
 }
 
 
-void wish_path(char **args, int size, char** PATH_ARRAY) {
+void wish_path(char **args, int size) {
     int i;
     /*Check for illegal & command*/
     for(i=1; i < size; i++){
@@ -198,28 +198,22 @@ void wish_path(char **args, int size, char** PATH_ARRAY) {
             return;
         }  
     }
-
-    /*Empty current paths*/
-    for (i=0; PATH_ARRAY[i] != NULL; i++){
-        PATH_ARRAY[i] = NULL;
-    }
-    
-    /*If no parameters, just empty the pathslist and return*/
+    /*If no parameters, empty the path*/
 
     if (size == 1){
+        putenv("PATH=");
         return;
     }
     
-    /*Add all user provided paths to pathlist*/
-    for(i=0; i < size; i++){
-        PATH_ARRAY[i] = args[i+1];
+    /*Add all user provided paths to path*/
+    char path[PATH_MAX] ="PATH=";
+    for(i=1; i < size; i++){
+        strcat(path, args[i]);
+        strcat(path, "/ ");
         
     }
-    PATH_ARRAY[size] = NULL;
-    printf("IN WISH_PATH\n");
-    for (i=0; PATH_ARRAY[i] != NULL; i++){
-        printf("%s\n",PATH_ARRAY[i]);
-    }
+    putenv(path);
+    
 }
 
 
@@ -237,8 +231,7 @@ FILE * wish_redirect(char *fname) {
 
 
 /* Function to launch built-in commands or a process */
-void wish_launch(char **args, int size, char** PATH_ARRAY){
-    
+void wish_launch(char **args, int size){
     char **command;
     int maxlen = MAXLEN, i_args, i_command = 0;
 
@@ -248,7 +241,7 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
         return;
     
     } else if (strcmp("path", args[0]) == 0) {
-        wish_path(args, size, PATH_ARRAY);
+        wish_path(args, size);
         return;
     }
 
@@ -261,7 +254,7 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
 
     /* Looping through args list that holds all the commands/arguments from the user's input */
     for (i_args = 0; i_args < size; i_args++) {
-
+        
         /* If ampersand is found, execute command and its possible arguments */
         if (strcmp("&", args[i_args]) == 0) {
             
@@ -271,7 +264,7 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
                 return;
             }
 
-            shell_fork_exec(command, PATH_ARRAY);
+            wish_fork_exec(command);
 
             command[i_command + 1] = NULL;
 
@@ -296,17 +289,17 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
         }
     }
     /* Executing the last command that was given */
-    shell_fork_exec(command, PATH_ARRAY);
-
+    wish_fork_exec(command);
+    /*When all commands have been send to children, main process waits here!*/
     pid_t wpid;
     int ret_stat;
-    while((wpid = waitpid(-1, &ret_stat, 0)) != -1) {
+    while((wpid = wait(&ret_stat)) != -1) {
 
         if(ret_stat == 0){
-            printf("child %d terminated succesfully\n", wpid);
+            /*We are ok, child terminated with success*/
         }else{
-            printf("Child %d terminated with error\n", wpid);
-            /*Further checks to be added here*/
+            /*In case child terminated with error*/
+            
         }
     }
 
@@ -314,89 +307,61 @@ void wish_launch(char **args, int size, char** PATH_ARRAY){
 }
 
 /*check for access before execution*/
-const char* check_path(char* prog_name, char** PATH_ARRAY){
-
-    char path[MAXLEN];
-    const char* path_p = path;
-    size_t s = sizeof(char) * MAXLEN;
+const char* check_path(char* prog_name){
+    char p[PATH_MAX], delim[1] = " ";
+    const char* path = p;
+    char *p_path = getenv("PATH");
+    char* token;
     int a;
-    /*Get current pathlist*/
-    for(int i=0; PATH_ARRAY[i] != NULL; i++){
-        strcpy(path, PATH_ARRAY[i]);
-        strncat(path, "/", s);
-        strncat(path, prog_name, s);
-        printf("IN check_path: %s\n", path);
-        a = access(path_p, X_OK);
+    /*split path by whitespace and add program name to path before checking access*/
+    token = strtok(p_path, delim);
+    
+    
+    while(token = strtok_r(p_path, " ", &p_path)){
         
+        /*access() and execv() require const char*, so we create path and change it to point p*/
+        strcpy(p, token);
+        strcat(p, prog_name);
         
+        /*if path has wrx permissions, we return that path executor function*/
+        
+        a = access(path, X_OK);
         if (a == 0){
-            printf("A:%d", a);
-            
-            return path_p;
+            return path;
         }
-       
         
     }
     return "NOPATH";
 }
 
-void shell_fork_exec(char **args, char** PATH_ARRAY) {   
-    const char* path = check_path(args[0], PATH_ARRAY);
+void wish_fork_exec(char **args) {   
+
+    /*Check for valid path*/
+    const char* path = check_path(args[0]);
+    
     if (strcmp(path, "NOPATH") == 0){
-        printf("No access!\n");
+        write_error(6);
         return;
     }
-    
-
-    /*process part starts*/
+    /*Fork a process to execute wanted program*/
     pid_t pid;
-    
-
     pid = fork();
     
     /*Fork returns pid of child to parent and pid of 0 to child*/
-    /*So child i pid=0 and parent is something else*/
     if (pid == 0){
-        
         /*Launch program in child process*/
         /*execv(prgrm path, arguments vector)*/
         if (execv(path,args) == -1){
-            
-            printf("Something happened when launching program %s", args[0]);
-            perror("Shell-execute->execvp");
+            printf("Something happened when launching program %s", path);
+            perror("Wish_execv");
+            exit(1);
         }
     }else if (pid < 0){
-        /*Fork has failed if process id is less than */
-        perror("Shell-execute->ParentFork");
-
+        /*Fork has failed if process id is less than 0*/
+        perror("Wish_execv");
+        exit(1);
     }
-    
-    /*Now we are in parent process*/
-
-       
-    /*process part ends and function can return to receive new calls*/
-
-
-
-
-
-
-    /*CASE INTERACTIVE*/
-    /* Fork() current process to create a copy
-       to know which process is which, we look at the process id's
-       -> parent has child_pid of child and child has child_pid of 0
-       
-       use exec variant execvp() (or something) to run wanted program in child process created by fork
-       exec + v(takes vector of parameters) p (finds program by its name)
-       parent waits until child has completed
-       add a shitton of if's and error checks and validate that child process has ended properly
-       after that we can go on and start doing other stuff
-    */
-   /*CASE BATCH*/
-   /*For i in commands i*/
-
-   
-    printf("\n");
+    /*Main process returns here since it has nothing to do after fork*/
     return;
 
 }
@@ -433,7 +398,10 @@ void write_error(int flag) {
     /* 5 -> there can't be '&' in path command */
     } else if (flag == 5) {
         strcpy(error_message, "'path' command and '&' can't be the in same statement\n");
-    
+
+    } else if (flag == 6) {
+        strcpy(error_message, "Could not resolve command path!\n");
+
     /* If flag is something else, write universal error message */
     } else {
         strcpy(error_message, "An error has occurred\n");
