@@ -69,6 +69,13 @@ void batch_mode(FILE *file) {
     char *buffer = NULL;
     size_t bufsize = 0;
 
+    getline(&buffer, &bufsize, file);
+
+    if (strcmp("#!/bin/bash\n", buffer) != 0) {
+        write_error(7);
+        exit(1);
+    }
+
     while (getline(&buffer, &bufsize, file) != EOF) {
         parse_command(buffer);
     }

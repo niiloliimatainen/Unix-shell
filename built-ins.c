@@ -131,8 +131,8 @@ void write_error(int flag) {
         strcpy(error_message, "Could not identify command\n");
 
     /* 7 -> The batch file is invalid */
-    } else if (flag == 6) {
-        strcpy(error_message, "Can't open batch file\n");
+    } else if (flag == 7) {
+        strcpy(error_message, "Invalid batch file\n");
     
     /* If flag is something else, write universal error message */
     } else {
