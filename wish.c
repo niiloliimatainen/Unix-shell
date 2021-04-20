@@ -160,6 +160,7 @@ void parse_command(char *buffer) {
 
 /* Function to launch built-in commands or a process */
 void wish_launch(char **args, int size) {
+    int pcounter = 0;
     char **command;
     int maxlen = MAXLEN, i_args, i_command = 0;
 
@@ -205,6 +206,7 @@ void wish_launch(char **args, int size) {
             } 
 
             wish_fork_exec(command);
+            pcounter = pcounter + 1;
             command[i_command + 1] = NULL;
 
             /* Clearing the command list */
@@ -232,6 +234,7 @@ void wish_launch(char **args, int size) {
     
     /* Executing the last command that was given */
     wish_fork_exec(command);
+<<<<<<< HEAD
     /*When all commands have been send to children, main process waits here!*/
     pid_t wpid;
     int ret_stat;
@@ -243,6 +246,13 @@ void wish_launch(char **args, int size) {
             /*In case child terminated with error*/
             
         }
+=======
+    pcounter = pcounter + 1;
+    /*When all commands have been send to children, main process waits here for every child to finish!*/
+    /*Programs we launch to processes handle their own errors and so we take no action here if process returns bad value*/
+    for (int i=0; i < pcounter; i++){
+        wait(NULL);
+>>>>>>> ca8d368de7496199b215c7a551bb8feddaa73e66
     }
 
     free(command);
