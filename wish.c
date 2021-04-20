@@ -179,11 +179,11 @@ void parse_command(char *buffer) {
     args[index] = NULL;
     wish_launch(args, index);
 
-    free(args);
+    
     for (int i = 0; i < index; i++) {
         args[i] = NULL;
     }
-    
+    free(args);
     /* If there is redirect, close the file and resume standard behavior of stdout */
     if (file != NULL) {
         fclose(file);
@@ -306,17 +306,18 @@ const char* check_path(char* prog_name) {
         }
     }
        
-    return "NOPATH";
+    return NULL;
 }
 
 
 /* Function to execute non-built-in commands */
 void wish_fork_exec(char **args) {  
 
+
     /*Check for valid path*/
     const char* path = check_path(args[0]);
     
-    if (strcmp(path, "NOPATH") == 0) {
+    if (path == NULL) {
         write_error(6);
         return;
     }
