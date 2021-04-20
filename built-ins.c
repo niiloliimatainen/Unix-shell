@@ -134,9 +134,9 @@ void write_error(int flag) {
     } else if (flag == 7) {
         strcpy(error_message, "Invalid batch file\n");
 
-    /* 8 -> There can't be multiple redirections in one command */
+    /* 8 -> There happened some error in redirection */
     } else if (flag == 8) {
-        strcpy(error_message, "There can't be multiple '>' in one statement\n");
+        strcpy(error_message, "Invalid use of '>' command\n");
     
     /* If flag is something else, write universal error message */
     } else {

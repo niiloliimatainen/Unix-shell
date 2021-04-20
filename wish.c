@@ -18,6 +18,7 @@ int main(int argc, char *argv[]) {
 
     /*INIT path enviroment variable*/
     char path[PATH_MAX] ="PATH=";
+
     if(putenv(strcat(path, "/bin/")) != 0){
         write_error(-1);
         exit(1);
@@ -71,7 +72,8 @@ void batch_mode(FILE *file) {
 
     getline(&buffer, &bufsize, file);
 
-    if (strcmp("#!/bin/bash\n", buffer) != 0) {
+    /* Check that the script's path is correct */
+    if (strcmp("#!/bin/wish\n", buffer) != 0) {
         write_error(7);
         exit(1);
     }
@@ -88,7 +90,7 @@ void batch_mode(FILE *file) {
 /* Inspiration for args list is taken from 1. source */
 void parse_command(char *buffer) {
     char *token, **args;
-    int index = 0, size, maxlen = MAXLEN;
+    int index = 0, size, maxlen = MAXLEN, is_first = 1;
     FILE *file = NULL;
 
     /* Return if input is empty, else remove newline from the end */ 
@@ -125,19 +127,29 @@ void parse_command(char *buffer) {
 
         /* Call for redirect if '>' is found */
         } else if (strcmp(">", token) == 0) {
+            
+            /* If no command before redirection, write error and return */
+            if (is_first) {
+                write_error(8);
+                return;   
 
-            /* If no output file, the output is written to stdout */
-            if ((token = strtok(NULL, " ")) == NULL) {
-                break;
-            }
+            /* If no output file after redirection, write error and return */
+            } else if ((token = strtok(NULL, " ")) == NULL) {
+                write_error(8);
+                return;
+            
+            /* If two redirections in a row, write error and return */
+            } else if (strcmp(">", token) == 0) {
+                write_error(8);
+                return;
+            } 
+
             char *tmp = token;
-            token = strtok(NULL, " ");
-
-            while (token != NULL) {
-                if (strcmp(">", token) == 0) {
-                    write_error(8);
-                    return;
-                }
+            
+            /* Check if there are too many output files */
+            if ((token = strtok(NULL, " ")) != NULL) {
+                write_error(8);
+                return;
             }
 
             file = wish_redirect(tmp);
@@ -155,6 +167,11 @@ void parse_command(char *buffer) {
                 exit(1);
             }
         }
+
+        if (is_first == 1) {
+            is_first = 0;
+        }
+
         token = strtok(NULL, " ");
     }
 
@@ -222,9 +239,9 @@ void wish_launch(char **args, int size) {
                 return;
             } 
 
+            command[i_command + 1] = NULL;
             wish_fork_exec(command);
             pcounter = pcounter + 1;
-            command[i_command + 1] = NULL;
 
             /* Clearing the command list */
             for (i_command = 0; command[i_command] != NULL; i_command++) {
@@ -250,6 +267,7 @@ void wish_launch(char **args, int size) {
 
     
     /* Executing the last command that was given */
+    command[i_command] = NULL;
     wish_fork_exec(command);
     pcounter = pcounter + 1;
     /*When all commands have been send to children, main process waits here for every child to finish!*/
@@ -287,8 +305,8 @@ const char* check_path(char* prog_name) {
 
 
 /* Function to execute non-built-in commands */
-void wish_fork_exec(char **args) {   
-
+void wish_fork_exec(char **args) {  
+    
     /*Check for valid path*/
     const char* path = check_path(args[0]);
     
@@ -304,7 +322,7 @@ void wish_fork_exec(char **args) {
     if (pid == 0) {
         /*Launch program in child process*/
         /*execv(prgrm path, arguments vector)*/
-        if (execv(path,args) == -1) {
+        if (execv(path, args) == -1) {
             printf("Something happened when launching program %s", path);
             perror("Wish_execv");
             exit(1);
