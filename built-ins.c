@@ -21,23 +21,23 @@ void wish_cd(char **args, int size) {
         }
         putenv(path);
     }
-    
 }
 
 
+/* Function takes in new path and update it to the PATH environment variable */
 void wish_path(char **args, int size) {
     int i;
     char path[PATH_MAX] ="PATH=";
 
     /*Check for illegal & command*/
-    for(i=1; i < size; i++){
-        if(strcmp(args[i], "&") == 0){
+    for (i=1; i < size; i++) {
+        if(strcmp(args[i], "&") == 0) {
             write_error(5);
             return;
         }  
     }
-    /*If no parameters, empty the path*/
 
+    /*If no parameters, empty the path*/
     if (size == 1){
         putenv("PATH=");
         return;
@@ -50,7 +50,8 @@ void wish_path(char **args, int size) {
         
     }
     putenv(path);
-    
+    1941
+
 }
 
 
@@ -102,14 +103,14 @@ void write_error(int flag) {
     } else if (flag == 4) {
         strcpy(error_message, "No command is given after '&'\n");
 
-    /* 5 -> there can't be '&' in path command */
+    /* 5 -> there can't be '&' with built-in commands */
     } else if (flag == 5) {
-        strcpy(error_message, "'path' command and '&' can't be the in same statement\n");
+        strcpy(error_message, "'&' and built-in command can be used in same statement\n");
 
     /* 6 -> can't found right path for the command */
     } else if (flag == 6) {
-        strcpy(error_message, "Could not resolve command path!\n");
-
+        strcpy(error_message, "Could not resolve command path\n");
+    
     /* If flag is something else, write universal error message */
     } else {
         strcpy(error_message, "An error has occurred\n");

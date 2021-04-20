@@ -178,7 +178,20 @@ void wish_launch(char **args, int size){
             if (args[i_args + 1] == NULL) {
                 write_error(4);
                 return;
-            }
+            
+            /* If command after ampersand is built-in (except redirection), write error and return */
+            } else if (strcmp("cd", args[i_args + 1]) == 0) {
+                write_error(5);
+                return;
+            
+            } else if (strcmp("path", args[i_args + 1]) == 0) {
+                write_error(5);
+                return;
+            
+            } else if (strcmp("exit", args[i_args + 1]) == 0) {
+                write_error(5);
+                return;
+            } 
 
             wish_fork_exec(command);
 
