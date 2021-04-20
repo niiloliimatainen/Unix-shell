@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
         write_error(0);
         exit(1);
     }
-    printf("\n");
+
     return 0;
 }
 
@@ -62,6 +62,7 @@ void interactive_mode() {
     }
 
     free(buffer);
+    printf("\n");
 }
 
 
@@ -225,6 +226,11 @@ void wish_launch(char **args, int size) {
                 write_error(4);
                 return;
             
+            /* If there are multiple ampersands in row, write error and return */
+            } else if (strcmp("&", args[i_args + 1]) == 0) {
+                write_error(5);
+                return;
+
             /* If command after ampersand is built-in (except redirection), write error and return */
             } else if (strcmp("cd", args[i_args + 1]) == 0) {
                 write_error(5);
@@ -306,7 +312,7 @@ const char* check_path(char* prog_name) {
 
 /* Function to execute non-built-in commands */
 void wish_fork_exec(char **args) {  
-    
+
     /*Check for valid path*/
     const char* path = check_path(args[0]);
     

@@ -122,23 +122,23 @@ void write_error(int flag) {
     } else if (flag == 4) {
         strcpy(error_message, "No command is given after '&'\n");
 
-    /* 5 -> there can't be '&' with built-in commands */
+    /* 5 -> ampersand wasn't used correctly */
     } else if (flag == 5) {
-        strcpy(error_message, "'&' and built-in command can be used in same statement\n");
+        strcpy(error_message, "Invalid use of '&' command, read documentation\n");
 
     /* 6 -> command can't be found */
     } else if (flag == 6) {
         strcpy(error_message, "Could not identify command\n");
 
-    /* 7 -> The batch file is invalid */
+    /* 7 -> the batch file is invalid */
     } else if (flag == 7) {
         strcpy(error_message, "Invalid batch file\n");
 
-    /* 8 -> There happened some error in redirection */
+    /* 8 -> there happened some error in redirection */
     } else if (flag == 8) {
-        strcpy(error_message, "Invalid use of '>' command\n");
+        strcpy(error_message, "Invalid use of '>' command, read documentation\n");
     
-    /* If flag is something else, write universal error message */
+    /* if flag is something else, write universal error message */
     } else {
         strcpy(error_message, "An error has occurred\n");
     }
