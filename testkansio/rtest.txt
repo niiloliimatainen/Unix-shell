@@ -1,7 +1,0 @@
-rtest.txt
-ullari
-total 5
-drwxrwxrwx 1 root root    0 huhti  20 23:02 .
-drwxrwxrwx 1 root root 4096 huhti  20 23:00 ..
--rwxrwxrwx 1 root root   17 huhti  20 23:02 rtest.txt
--rwxrwxrwx 1 root root   36 huhti  20 23:01 ullari

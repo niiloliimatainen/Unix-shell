@@ -179,11 +179,12 @@ void parse_command(char *buffer) {
     args[index] = NULL;
     wish_launch(args, index);
 
-    
+    /* Clearing args list */ 
     for (int i = 0; i < index; i++) {
         args[i] = NULL;
     }
     free(args);
+
     /* If there is redirect, close the file and resume standard behavior of stdout */
     if (file != NULL) {
         fclose(file);
@@ -321,14 +322,15 @@ void wish_fork_exec(char **args) {
         write_error(6);
         return;
     }
-    /*Fork a process to execute wanted program*/
+    
+    /* Fork a process to execute wanted program */
     pid_t pid;
     pid = fork();
     
-    /*Fork returns pid of child to parent and pid of 0 to child*/
+    /* Fork returns pid of child to parent and pid of 0 to child */
     if (pid == 0) {
-        /*Launch program in child process*/
-        /*execv(prgrm path, arguments vector)*/
+        /* Launch program in child process */
+        /* execv(prgrm path, arguments vector) */
         if (execv(path, args) == -1) {
             printf("Something happened when launching program %s", path);
             perror("Wish_execv");
@@ -336,10 +338,10 @@ void wish_fork_exec(char **args) {
         }
 
     } else if (pid < 0) {
-        /*Fork has failed if process id is less than 0*/
+        /* Fork has failed if process id is less than 0 */
         perror("Wish_execv");
         exit(1);
     }
-    /*Main process returns here since it has nothing to do after fork*/
+    /* Main process returns here since it has nothing to do after fork */
     return;
 }
