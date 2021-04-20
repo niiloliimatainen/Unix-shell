@@ -14,7 +14,10 @@ int main(int argc, char *argv[]) {
 
     /*INIT path enviroment variable*/
     char path[PATH_MAX] ="PATH=";
-    putenv(strcat(path, "/bin/"));
+    if(putenv(strcat(path, "/bin/")) != 0){
+        write_error(-1);
+        exit(1);
+    }
 
     /* If no arguments given, starts an interactive mode */
     if (argc == 1) {

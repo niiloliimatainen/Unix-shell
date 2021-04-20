@@ -1,0 +1,10 @@
+ls
+ls 
+mkdir testfolder
+cd testfolder
+ls
+path 
+ls
+path /bin /usr/bin
+mkdir test2
+ls -la
