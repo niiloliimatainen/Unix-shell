@@ -3,30 +3,9 @@ Sources:
     1. https://brennan.io/2015/01/16/write-a-shell-in-c/
     2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file
 */
-#include <sys/wait.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <limits.h>
-
-#define MAXLEN 64
-
-/*Bad programming here: global list :)*/
 
 
-void interactive_mode();
-void write_error(int flag);
-void parse_command(char *buffer);
-void wish_fork_exec(char **args);
-void wish_launch(char **args, int size);
-void wish_cd(char **args, int size);
-void wish_exit(char *token, char *buffer);
-void batch_mode(FILE *file);
-void wish_path(char **args, int size);
-const char* check_path(char* prog_name);
-FILE * wish_redirect(char *fname);
-
+#include "wish.h"
 
 
 /* Parsing the arguments and executing them */
@@ -108,15 +87,13 @@ void parse_command(char *buffer) {
 
     token = strtok(buffer, delim);
 
-    /* Own implementation of exit command */
+    /* Call wish_exit if the command is exit without arguments */
     if (strcmp("exit", token) == 0) {
         if ((token = strtok(NULL, " ")) != NULL) {
             write_error(1);
-            return;
-        } else {
-            free(buffer);
-            exit(1);
+            return; 
         }
+        wish_exit(buffer);
     }
 
     /* Allocate memory for args list */
@@ -170,6 +147,7 @@ void parse_command(char *buffer) {
 }
 
 
+<<<<<<< HEAD
 
 
 /* Built-in command for cd */
@@ -235,6 +213,8 @@ FILE * wish_redirect(char *fname) {
 }
 
 
+=======
+>>>>>>> e69b2b315c404a70e45deb7c17e2211dd88c9391
 /* Function to launch built-in commands or a process */
 void wish_launch(char **args, int size){
     char **command;
@@ -311,33 +291,42 @@ void wish_launch(char **args, int size){
     free(command);
 }
 
+
 /*check for access before execution*/
 const char* check_path(char* prog_name){
-    char p[PATH_MAX], delim[1] = " ";
+    char p[PATH_MAX], delim[1] = " ", *token, *p_path = getenv("PATH");
     const char* path = p;
-    char *p_path = getenv("PATH");
-    char* token;
     int a;
+<<<<<<< HEAD
     /*split path by whitespace and add program name to path before checking access*/
     token = strtok(p_path, delim);
     
     
     while((token = strtok_r(p_path, " ", &p_path))){
+=======
+
+    /*split path by whitespace and add program name to path before checking access*/    
+    while ((token = strtok_r(p_path, delim, &p_path))) {
+>>>>>>> e69b2b315c404a70e45deb7c17e2211dd88c9391
         
         /*access() and execv() require const char*, so we create path and change it to point p*/
         strcpy(p, token);
         strcat(p, prog_name);
         
         /*if path has wrx permissions, we return that path executor function*/
+<<<<<<< HEAD
         printf("path:%s",path);
+=======
+>>>>>>> e69b2b315c404a70e45deb7c17e2211dd88c9391
         a = access(path, X_OK);
         if (a == 0){
             return path;
         }
-        
     }
+       
     return "NOPATH";
 }
+
 
 void wish_fork_exec(char **args) {   
 
@@ -368,49 +357,4 @@ void wish_fork_exec(char **args) {
     }
     /*Main process returns here since it has nothing to do after fork*/
     return;
-
-}
-
-
- /* Helper function to write errors */
-void write_error(int flag) {
-    char error_message[MAXLEN];
-
-    /* -1 -> error occured in malloc, realloc or file opening */
-    if (flag == -1) {
-        strcpy(error_message, "An error has occurred\n");
-
-    /* 0 -> Shell was invoked with more than one batch file */
-    } else if (flag == 0) { 
-        strcpy(error_message, "Shell can be invoked with only one batch file\n");
-
-    /* 1 -> there was a wrong amount of arguments in exit command */
-    } else if (flag == 1) {
-        strcpy(error_message, "'exit' command takes no arguments\n");
-        
-    /* 2 -> there was 0 or >1 arguments in cd command */    
-    } else if (flag == 2) {
-        strcpy(error_message, "'cd' command takes precisely one argument\n");
-    
-    /* 3 -> can't find the directory that was given to cd */
-    } else if (flag == 3) {
-        strcpy(error_message, "No such directory\n");
-    
-    /* 4 -> there must be a new command after '&' */
-    } else if (flag == 4) {
-        strcpy(error_message, "No command is given after '&'\n");
-
-    /* 5 -> there can't be '&' in path command */
-    } else if (flag == 5) {
-        strcpy(error_message, "'path' command and '&' can't be the in same statement\n");
-
-    } else if (flag == 6) {
-        strcpy(error_message, "Could not resolve command path!\n");
-
-    /* If flag is something else, write universal error message */
-    } else {
-        strcpy(error_message, "An error has occurred\n");
-    }
-
-    write(STDERR_FILENO, error_message, strlen(error_message));
 }
