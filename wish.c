@@ -1,4 +1,4 @@
-/****************************************************************/
+/*****************************************************************/
 
 /* Creators: Niilo Liimantainen & Oskari Kivekäs */
 /* Date: 20.04.2021 */
@@ -6,7 +6,7 @@
 /*   1. https://brennan.io/2015/01/16/write-a-shell-in-c/ */
 /*   2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file */
     
-/****************************************************************/
+/*****************************************************************/
 
 
 #include "wish.h"
@@ -322,7 +322,7 @@ void wish_fork_exec(char **args) {
         write_error(6);
         return;
     }
-    
+
     /* Fork a process to execute wanted program */
     pid_t pid;
     pid = fork();
