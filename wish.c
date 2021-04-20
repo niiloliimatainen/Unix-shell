@@ -1,8 +1,12 @@
-/*
-Sources:
-    1. https://brennan.io/2015/01/16/write-a-shell-in-c/
-    2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file
-*/
+/****************************************************************/
+
+/* Creators: Niilo Liimantainen & Oskari Kivekäs */
+/* Date: 20.04.2021 */
+/* Sources: */
+/*   1. https://brennan.io/2015/01/16/write-a-shell-in-c/ */
+/*   2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file */
+    
+/****************************************************************/
 
 
 #include "wish.h"
@@ -27,7 +31,7 @@ int main(int argc, char *argv[]) {
     } else if (argc == 2) {
 
         if ((file = fopen(argv[1], "r")) == NULL) {
-                write_error(-1);
+                write_error(7);
 			    exit(1);
         } 
         batch_mode(file);
@@ -49,7 +53,6 @@ void interactive_mode() {
     size_t bufsize = 0;
     
     while (1) {
-        printf("pathv:%s\n",getenv("PATH"));
         printf("wish> ");
 
         if (getline(&buffer, &bufsize, stdin) != EOF) {
@@ -72,6 +75,7 @@ void batch_mode(FILE *file) {
 
     free(buffer);
 }
+
 
 /* Parsing every command/argument separated with whitespace to args list */
 /* Inspiration for args list is taken from 1. source */
@@ -151,7 +155,7 @@ void parse_command(char *buffer) {
 
 
 /* Function to launch built-in commands or a process */
-void wish_launch(char **args, int size){
+void wish_launch(char **args, int size) {
     char **command;
     int maxlen = MAXLEN, i_args, i_command = 0;
 
@@ -164,7 +168,6 @@ void wish_launch(char **args, int size){
         wish_path(args, size);
         return;
     }
-
 
     /* Allocating memory for command list that stores one command and its arguments at a time */
     if ((command = malloc(maxlen * sizeof(char*))) == NULL) {
@@ -182,10 +185,22 @@ void wish_launch(char **args, int size){
             if (args[i_args + 1] == NULL) {
                 write_error(4);
                 return;
-            }
+            
+            /* If command after ampersand is built-in (except redirection), write error and return */
+            } else if (strcmp("cd", args[i_args + 1]) == 0) {
+                write_error(5);
+                return;
+            
+            } else if (strcmp("path", args[i_args + 1]) == 0) {
+                write_error(5);
+                return;
+            
+            } else if (strcmp("exit", args[i_args + 1]) == 0) {
+                write_error(5);
+                return;
+            } 
 
             wish_fork_exec(command);
-
             command[i_command + 1] = NULL;
 
             /* Clearing the command list */
@@ -196,6 +211,7 @@ void wish_launch(char **args, int size){
 
         /* Adding command and its possible arguments to command list */
         } else {
+
             command[i_command] = args[i_args];
 
             if (i_command >= MAXLEN) {
@@ -229,7 +245,7 @@ void wish_launch(char **args, int size){
 
 
 /*check for access before execution*/
-const char* check_path(char* prog_name){
+const char* check_path(char* prog_name) {
     char p[PATH_MAX], *token, *p_path = getenv("PATH");
     const char* path = p;
     int a;
@@ -242,9 +258,8 @@ const char* check_path(char* prog_name){
         strcat(p, prog_name);
         
         /*if path has wrx permissions, we return that path executor function*/
-        printf("path:%s",path);
         a = access(path, X_OK);
-        if (a == 0){
+        if (a == 0) {
             return path;
         }
     }
@@ -253,6 +268,7 @@ const char* check_path(char* prog_name){
 }
 
 
+/* Function to execute non-built-in commands */
 void wish_fork_exec(char **args) {   
 
     /*Check for valid path*/
@@ -267,15 +283,16 @@ void wish_fork_exec(char **args) {
     pid = fork();
     
     /*Fork returns pid of child to parent and pid of 0 to child*/
-    if (pid == 0){
+    if (pid == 0) {
         /*Launch program in child process*/
         /*execv(prgrm path, arguments vector)*/
-        if (execv(path,args) == -1){
+        if (execv(path,args) == -1) {
             printf("Something happened when launching program %s", path);
             perror("Wish_execv");
             exit(1);
         }
-    }else if (pid < 0){
+
+    } else if (pid < 0) {
         /*Fork has failed if process id is less than 0*/
         perror("Wish_execv");
         exit(1);

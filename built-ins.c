@@ -1,11 +1,16 @@
-/*
-Sources:
-    1. https://brennan.io/2015/01/16/write-a-shell-in-c/
-    2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file
-*/
+/****************************************************************/
+
+/* Creators: Niilo Liimantainen & Oskari Kivekäs */
+/* Date: 20.04.2021 */
+/* Sources: */
+/*   1. https://brennan.io/2015/01/16/write-a-shell-in-c/ */
+/*   2. https://stackoverflow.com/questions/29154056/redirect-stdout-to-a-file */
+    
+/****************************************************************/
 
 
 #include "wish.h"
+
 
 /* Built-in command for cd */
 void wish_cd(char **args, int size) {
@@ -14,35 +19,40 @@ void wish_cd(char **args, int size) {
         write_error(2);
     
     } else {
-        static char path[PATH_MAX] ="";
+
+        static char path[PATH_MAX] = "";
         strcat(path, getenv("PATH"));
         /* Check if chdir succeeds */
         if (chdir(args[1]) == -1) {
             write_error(3);
         }
         
-        putenv(path);
-        printf("pathenv:%s",getenv("PATH"));
+        /* Update path variable after chdir */
+        if (putenv(path) != 0) {
+            write_error(-1);
+            exit(1);
+        }
     }
-    
 }
 
 
+/* Function takes in new path and update it to the PATH environment variable */
 void wish_path(char **args, int size) {
-    int i;
     static char path[PATH_MAX] ="PATH=";
+     int i;
     
     /*Check for illegal & command*/
-    for(i=1; i < size; i++){
-        if(strcmp(args[i], "&") == 0){
+    for (i=1; i < size; i++) {
+        if(strcmp(args[i], "&") == 0) {
             write_error(5);
             return;
         }  
     }
-    /*If no parameters, empty the path*/
 
+    /*If no parameters, empty the path*/
     if (size == 1){
-        if(putenv("PATH=") != 0){
+
+        if (putenv("PATH=") != 0) {
             write_error(-1);
             exit(1);
         }
@@ -54,14 +64,13 @@ void wish_path(char **args, int size) {
     for(i=1; i < size; i++){
         strcat(path, args[i]);
         strcat(path, "/ ");
-        
     }
     
+    /* Update path variable */
     if (putenv(path) != 0){
         write_error(-1);
         exit(1);
     }
-    
 }
 
 
@@ -113,14 +122,18 @@ void write_error(int flag) {
     } else if (flag == 4) {
         strcpy(error_message, "No command is given after '&'\n");
 
-    /* 5 -> there can't be '&' in path command */
+    /* 5 -> there can't be '&' with built-in commands */
     } else if (flag == 5) {
-        strcpy(error_message, "'path' command and '&' can't be the in same statement\n");
+        strcpy(error_message, "'&' and built-in command can be used in same statement\n");
 
     /* 6 -> can't found right path for the command */
     } else if (flag == 6) {
-        strcpy(error_message, "Could not resolve command path!\n");
+        strcpy(error_message, "Could not resolve command path\n");
 
+    /* 7 -> The batch file is invalid */
+    } else if (flag == 6) {
+        strcpy(error_message, "Can't open batch file\n");
+    
     /* If flag is something else, write universal error message */
     } else {
         strcpy(error_message, "An error has occurred\n");
