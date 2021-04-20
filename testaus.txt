@@ -1,5 +1,0 @@
-mkdir uusi
-cd uusi
-cat eiole
-echo "hei"
-ls -la

@@ -234,25 +234,11 @@ void wish_launch(char **args, int size) {
     
     /* Executing the last command that was given */
     wish_fork_exec(command);
-<<<<<<< HEAD
-    /*When all commands have been send to children, main process waits here!*/
-    pid_t wpid;
-    int ret_stat;
-    while((wpid = wait(&ret_stat)) != -1) {
-
-        if(ret_stat == 0) {
-            /*We are ok, child terminated with success*/
-        }else {
-            /*In case child terminated with error*/
-            
-        }
-=======
     pcounter = pcounter + 1;
     /*When all commands have been send to children, main process waits here for every child to finish!*/
     /*Programs we launch to processes handle their own errors and so we take no action here if process returns bad value*/
     for (int i=0; i < pcounter; i++){
         wait(NULL);
->>>>>>> ca8d368de7496199b215c7a551bb8feddaa73e66
     }
 
     free(command);
